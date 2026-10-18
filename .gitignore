@@ -1,0 +1,48 @@
+# ---------- General ----------
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---------- Secrets / environment ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Python / FastAPI (backend) ----------
+pycache/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# ---------- React Native / Expo (mobile) ----------
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+android/
+ios/
