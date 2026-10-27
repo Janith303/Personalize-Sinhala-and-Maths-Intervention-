@@ -31,7 +31,7 @@ const MENU_ITEMS: MenuItem[] = [
     title: "අකුරු හදුනාගනිමු ",
     icon: "game-controller",
     iconBg: "#FF5C8A",
-    route: "/sinhala-writing/mahaprana/recognition",
+    route: "/sinhala-writing/mahaprana/akuru-hadunaganimu",
   },
   
   {
