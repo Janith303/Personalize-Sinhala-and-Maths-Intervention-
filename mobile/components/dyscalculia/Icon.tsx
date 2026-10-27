@@ -1,6 +1,7 @@
 // Picture icons of the dyscalculia module (PNG files in assets/images/dyscalculia/icons).
 // To change an icon, replace its PNG file (keep the same name).
 import { Image, type ImageStyle, type StyleProp } from 'react-native';
+import type { SkillArea } from '../../types/dyscalculia';
 
 const ICONS = {
   owl: require('../../assets/images/dyscalculia/icons/owl.png'),
@@ -27,6 +28,9 @@ const ICONS = {
 };
 
 export type IconName = keyof typeof ICONS;
+
+/** Picture for each skill area (Stage 2 and practice). */
+export const AREA_ICON: Record<SkillArea, IconName> = { quantity: 'dots', sequence: 'train', operations: 'operations' };
 
 export function Icon({ name, size = 32, style }: { name: IconName; size?: number; style?: StyleProp<ImageStyle> }) {
   return <Image source={ICONS[name]} style={[{ width: size, height: size }, style]} resizeMode="contain" accessible={false} />;

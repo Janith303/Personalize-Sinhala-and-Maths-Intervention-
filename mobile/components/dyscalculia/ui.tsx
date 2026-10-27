@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, Text, View, type StyleProp, type TextProps, type TextStyle, type ViewStyle } from 'react-native';
 import { colors, fonts } from '../../constants/dyscalculia/theme';
+import { Icon, type IconName } from './Icon';
 
 type Weight = keyof typeof fonts;
 
@@ -30,7 +31,7 @@ export function BigButton({
   label: string;
   onPress: () => void;
   color?: string;
-  icon?: string;
+  icon?: IconName;
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -49,7 +50,7 @@ export function BigButton({
       className={`flex-row items-center justify-center rounded-2xl active:opacity-80 ${pad}`}
       style={[{ backgroundColor: color, opacity: disabled ? 0.45 : 1 }, style]}
     >
-      {icon ? <Text style={{ fontSize: font + 2, marginRight: 8, color: colors.white }}>{icon}</Text> : null}
+      {icon ? <Icon name={icon} size={font + 4} style={{ marginRight: 8 }} /> : null}
       {numeric ? (
         <NumText style={[{ fontSize: font + 14, lineHeight: font + 20, color: colors.white }, textStyle]}>{label}</NumText>
       ) : (
@@ -64,7 +65,7 @@ export function BigButton({
 export function StarPill({ count, label }: { count?: number; label?: string }) {
   return (
     <View className="flex-row items-center rounded-full bg-white px-3 py-1">
-      <Text style={{ fontSize: 15, marginRight: 4 }}>⭐</Text>
+      <Icon name="star" size={17} style={{ marginRight: 4 }} />
       <SiText weight="bold" style={{ fontSize: 14, color: colors.navy }}>
         {label ?? count}
       </SiText>
@@ -115,14 +116,14 @@ export function ProgressDots({ total, current }: { total: number; current: numbe
   );
 }
 
-/** Friendly owl mascot. */
-export function Mascot({ size = 80, mood = '🦉' }: { size?: number; mood?: string }) {
+/** Friendly owl mascot (or another picture, e.g. the party owl or trophy). */
+export function Mascot({ size = 80, picture = 'owl' }: { size?: number; picture?: IconName }) {
   return (
     <View
       className="items-center justify-center rounded-full"
       style={{ width: size, height: size, backgroundColor: colors.sky, borderWidth: 3, borderColor: colors.primaryLight }}
     >
-      <Text style={{ fontSize: size * 0.55 }}>{mood}</Text>
+      <Icon name={picture} size={size * 0.78} />
     </View>
   );
 }

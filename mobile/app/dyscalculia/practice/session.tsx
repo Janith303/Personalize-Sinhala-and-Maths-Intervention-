@@ -2,7 +2,8 @@
 // 2+ stars unlocks the next level; below 50 % suggests an easier level.
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Icon, StarRow } from '../../../components/dyscalculia/Icon';
 import { MathBackground } from '../../../components/dyscalculia/MathBackground';
 import { QuestionPlayer } from '../../../components/dyscalculia/QuestionPlayer';
 import { BigButton, Card, Mascot, SiText, TopBar } from '../../../components/dyscalculia/ui';
@@ -52,20 +53,22 @@ export default function PracticeSession() {
       <TopBar title={title} onBack={() => router.replace('/dyscalculia/practice')} />
       <MathBackground>
         <View className="flex-1 flex-row items-center justify-center px-6">
-          <Mascot size={120} mood={passed ? '🎉' : '💪'} />
+          <Mascot size={120} picture={passed ? 'owl_party' : 'owl'} />
           <Card className="ml-6 items-center" style={{ width: '58%' }}>
             <SiText weight="bold" style={{ fontSize: 22, color: areaColors[area].main }}>
               {si.practice.sessionDone}
             </SiText>
-            <Text style={{ fontSize: 36, marginVertical: 6 }}>
-              {'⭐'.repeat(result.stars)}
-              {'☆'.repeat(3 - result.stars)}
-            </Text>
+            <View className="my-2 flex-row">
+              <StarRow filled={result.stars} total={3} size={38} />
+            </View>
             <SiText style={{ fontSize: 17 }}>{si.practice.score(result.correct, result.total)}</SiText>
             {passed && level < MAX_LEVEL ? (
-              <SiText weight="medium" style={{ fontSize: 15, color: colors.green, marginTop: 4 }}>
-                🔓 {si.practice.levelUp}
-              </SiText>
+              <View className="mt-1 flex-row items-center">
+                <Icon name="unlock" size={20} style={{ marginRight: 6 }} />
+                <SiText weight="medium" style={{ fontSize: 15, color: colors.green }}>
+                  {si.practice.levelUp}
+                </SiText>
+              </View>
             ) : null}
             {struggling && level > 1 ? (
               <SiText weight="medium" style={{ fontSize: 15, color: colors.amber, marginTop: 4 }}>
@@ -75,7 +78,7 @@ export default function PracticeSession() {
             <View className="mt-4 flex-row flex-wrap justify-center">
               <BigButton
                 label={si.practice.again}
-                icon="🔁"
+                icon="replay"
                 size="sm"
                 color={colors.primaryLight}
                 style={{ margin: 4 }}
@@ -86,14 +89,14 @@ export default function PracticeSession() {
                 }}
               />
               {struggling && level > 1 ? (
-                <BigButton label={si.practice.level(level - 1)} icon="⬇" size="sm" color={colors.amber} style={{ margin: 4 }} onPress={() => goLevel(level - 1)} />
+                <BigButton label={si.practice.level(level - 1)} icon="arrow_down" size="sm" color={colors.amber} style={{ margin: 4 }} onPress={() => goLevel(level - 1)} />
               ) : null}
               {passed && level < MAX_LEVEL ? (
-                <BigButton label={si.practice.nextLevel} icon="⬆" size="sm" color={colors.green} style={{ margin: 4 }} onPress={() => goLevel(level + 1)} />
+                <BigButton label={si.practice.nextLevel} icon="arrow_up" size="sm" color={colors.green} style={{ margin: 4 }} onPress={() => goLevel(level + 1)} />
               ) : null}
               <BigButton
                 label={si.practice.backToMap}
-                icon="🗺"
+                icon="map"
                 size="sm"
                 color={colors.purple}
                 style={{ margin: 4 }}

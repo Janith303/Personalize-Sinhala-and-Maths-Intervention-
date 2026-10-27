@@ -1,6 +1,7 @@
 // End of Stage 2 for the child: praise, then go to practice (recommended areas are marked there).
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { StarRow } from '../../../components/dyscalculia/Icon';
 import { MathBackground } from '../../../components/dyscalculia/MathBackground';
 import { BigButton, Card, Mascot, SiText, StarPill, TopBar } from '../../../components/dyscalculia/ui';
 import { si } from '../../../constants/dyscalculia/strings.si';
@@ -18,16 +19,18 @@ export default function ProfileDone() {
       />
       <MathBackground>
         <View className="flex-1 flex-row items-center justify-center px-6">
-          <Mascot size={120} mood="🏆" />
+          <Mascot size={120} picture="trophy" />
           <Card className="ml-6 items-center" style={{ width: '55%' }}>
             <SiText weight="bold" style={{ fontSize: 22, color: colors.purple, textAlign: 'center' }}>
               {si.profile.doneTitle}
             </SiText>
-            <Text style={{ fontSize: 34, marginVertical: 8 }}>⭐⭐⭐</Text>
+            <View className="my-2 flex-row">
+              <StarRow filled={3} size={34} />
+            </View>
             <SiText style={{ fontSize: 16 }}>{si.profile.doneSub}</SiText>
             <View className="mt-4 flex-row">
-              <BigButton label={si.common.home} icon="🏠" color={colors.primaryLight} onPress={() => router.replace('/dyscalculia')} style={{ marginRight: 12 }} />
-              <BigButton label={si.profile.toPractice} icon="🚀" color={colors.green} onPress={() => router.replace('/dyscalculia/practice')} />
+              <BigButton label={si.common.home} icon="home" color={colors.primaryLight} onPress={() => router.replace('/dyscalculia')} style={{ marginRight: 12 }} />
+              <BigButton label={si.profile.toPractice} icon="rocket" color={colors.green} onPress={() => router.replace('/dyscalculia/practice')} />
             </View>
           </Card>
         </View>

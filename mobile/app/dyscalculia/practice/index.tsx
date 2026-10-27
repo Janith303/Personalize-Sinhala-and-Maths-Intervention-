@@ -2,6 +2,7 @@
 // "needs support" are recommended first.
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
+import { AREA_ICON, Icon, StarRow } from '../../../components/dyscalculia/Icon';
 import { MathBackground } from '../../../components/dyscalculia/MathBackground';
 import { SiText, StarPill, TopBar } from '../../../components/dyscalculia/ui';
 import { si } from '../../../constants/dyscalculia/strings.si';
@@ -10,11 +11,7 @@ import { useDyscalculia } from '../../../contexts/dyscalculia/DyscalculiaContext
 import type { SkillArea } from '../../../types/dyscalculia';
 import { MAX_LEVEL } from '../../../utils/dyscalculia/questions';
 
-const AREAS: { area: SkillArea; icon: string }[] = [
-  { area: 'quantity', icon: '🔵' },
-  { area: 'sequence', icon: '🚂' },
-  { area: 'operations', icon: '➕' },
-];
+const AREAS: SkillArea[] = ['quantity', 'sequence', 'operations'];
 
 export default function PracticeMap() {
   const { stars, progress, profile } = useDyscalculia();
@@ -25,7 +22,7 @@ export default function PracticeMap() {
       <TopBar title={si.practice.title} onBack={() => router.replace('/dyscalculia')} right={<StarPill label={`${si.common.stars} ${stars}`} />} />
       <MathBackground>
         <View className="flex-1 flex-row p-4">
-          {AREAS.map(({ area, icon }) => {
+          {AREAS.map((area) => {
             const p = progress[area];
             const c = areaColors[area];
             const earned = Object.values(p.stars).reduce((a, b) => a + b, 0);
@@ -33,7 +30,7 @@ export default function PracticeMap() {
               <View key={area} className="mx-2 flex-1 justify-between rounded-3xl bg-white p-3" style={{ borderWidth: 3, borderColor: needs.has(area) ? c.main : colors.border }}>
                 <View>
                   <View className="flex-row items-center">
-                    <Text style={{ fontSize: 24, marginRight: 6 }}>{icon}</Text>
+                    <Icon name={AREA_ICON[area]} size={30} style={{ marginRight: 6 }} />
                     <SiText weight="bold" style={{ fontSize: 17, color: c.main }}>
                       {si.areas[area]}
                     </SiText>
@@ -65,14 +62,16 @@ export default function PracticeMap() {
                           style={{ backgroundColor: !unlocked ? c.soft : done ? colors.green : c.main }}
                         >
                           {!unlocked ? (
-                            <Text style={{ fontSize: 18 }}>🔒</Text>
+                            <Icon name="lock" size={22} />
                           ) : done ? (
                             <Text style={{ color: colors.white, fontSize: 20, fontWeight: '800' }}>✓</Text>
                           ) : (
                             <Text style={{ color: colors.white, fontSize: 20, fontWeight: '800' }}>{level}</Text>
                           )}
                         </View>
-                        <Text style={{ fontSize: 11, marginTop: 2 }}>{'⭐'.repeat(p.stars[level] ?? 0) || ' '}</Text>
+                        <View className="mt-0.5 h-3 flex-row">
+                          <StarRow filled={p.stars[level] ?? 0} size={11} />
+                        </View>
                       </Pressable>
                     );
                   })}
@@ -82,9 +81,11 @@ export default function PracticeMap() {
                   <View className="h-2.5 overflow-hidden rounded-full" style={{ backgroundColor: c.soft }}>
                     <View className="h-full rounded-full" style={{ width: `${(earned / (MAX_LEVEL * 3)) * 100}%`, backgroundColor: c.main }} />
                   </View>
-                  <SiText style={{ fontSize: 12, color: colors.muted, marginTop: 4 }}>
-                    {si.practice.level(p.unlockedLevel)} · ⭐ {earned}
-                  </SiText>
+                  <View className="mt-1 flex-row items-center">
+                    <SiText style={{ fontSize: 12, color: colors.muted }}>{si.practice.level(p.unlockedLevel)} · </SiText>
+                    <Icon name="star" size={12} style={{ marginRight: 3 }} />
+                    <SiText style={{ fontSize: 12, color: colors.muted }}>{earned}</SiText>
+                  </View>
                 </View>
               </View>
             );

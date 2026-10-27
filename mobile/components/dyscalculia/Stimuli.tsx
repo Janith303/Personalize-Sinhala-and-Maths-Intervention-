@@ -1,11 +1,12 @@
 // Pictures shown in the games: dots, shapes, faces, memory grid, number train and equations.
 // Drawn with plain Views so no extra drawing library is needed.
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { colors } from '../../constants/dyscalculia/theme';
 import type { FaceSpec, QuestionVisual, ShapeName } from '../../types/dyscalculia';
 import { MEMORY_GRID } from '../../utils/dyscalculia/screeningTrials';
 import { shuffle } from '../../utils/dyscalculia/random';
+import { Icon } from './Icon';
 import { NumText } from './ui';
 
 /** `count` dots scattered over a grid of slots (no overlaps). `seed` re-shuffles positions per question. */
@@ -173,7 +174,7 @@ export function MemoryGrid({ stars = [], probe, cell = 46 }: { stars?: number[];
             borderColor: i === probe ? colors.amber : colors.border,
           }}
         >
-          {stars.includes(i) ? <Text style={{ fontSize: cell * 0.55 }}>⭐</Text> : null}
+          {stars.includes(i) ? <Icon name="star" size={cell * 0.7} /> : null}
         </View>
       ))}
     </View>
@@ -183,12 +184,7 @@ export function MemoryGrid({ stars = [], probe, cell = 46 }: { stars?: number[];
 export function NumberTrain({ items, car = 58 }: { items: (number | null)[]; car?: number }) {
   return (
     <View className="flex-row items-end">
-      <View
-        className="mr-1 items-center justify-center"
-        style={{ width: car + 6, height: car + 10, backgroundColor: colors.primary, borderTopLeftRadius: 12, borderTopRightRadius: 24, borderRadius: 8 }}
-      >
-        <Text style={{ fontSize: car * 0.5 }}>🚂</Text>
-      </View>
+      <Icon name="train" size={car * 1.25} style={{ marginRight: 2 }} />
       {items.map((n, i) => (
         <View
           key={i}

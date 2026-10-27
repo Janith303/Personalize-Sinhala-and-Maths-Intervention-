@@ -155,7 +155,7 @@ export default function ScreeningPlay() {
               <SiText style={{ fontSize: 17, marginTop: 6 }}>{info.instruction}</SiText>
               <View className="mt-4 w-full flex-row items-center justify-between">
                 <SiText style={{ fontSize: 15, color: colors.muted }}>{si.common.ready}</SiText>
-                <BigButton label={si.common.start} icon="▶" onPress={() => setPhase('gap')} />
+                <BigButton label={si.common.start} icon="play" onPress={() => setPhase('gap')} />
               </View>
             </Card>
           </View>
