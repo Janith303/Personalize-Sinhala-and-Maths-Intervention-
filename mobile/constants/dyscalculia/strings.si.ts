@@ -39,7 +39,7 @@ export const si = {
     stage2Sub: 'පටන් ගමු',
     practiceTitle: 'පුහුණු වෙමු',
     practiceSub: 'මගේ ගණිත ගමන',
-    teacher: 'ගුරුවරුන්ට',
+    teacher: 'ගුරු / දෙමාපිය ප්‍රතිඵල',
   },
 
   // Stage 1: screening
@@ -140,7 +140,9 @@ export const si = {
 
   // Teacher / parent area (behind a PIN)
   teacher: {
-    title: 'ගුරුවරුන් සඳහා ප්‍රතිඵල',
+    title: 'ගුරුවරුන් හා දෙමාපියන් සඳහා ප්‍රතිඵල',
+    about:
+      'මෙම කොටස ළමයාට නොව, ගුරුවරයාට හෝ දෙමාපියන්ට පමණි. ළමයාගේ ක්‍රීඩා ප්‍රතිඵල, අවදානම සහ ඊළඟ පියවර මෙහි පෙන්වයි.',
     pinPrompt: 'PIN අංකය ඇතුළත් කරන්න',
     pinHint: 'ආදර්ශ PIN: 1234',
     wrongPin: 'PIN අංකය වැරදියි',

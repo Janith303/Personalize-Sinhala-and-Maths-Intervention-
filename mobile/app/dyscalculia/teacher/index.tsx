@@ -1,7 +1,8 @@
 // Teacher / parent view behind a PIN: Stage 1 risk with reasons, Stage 2 profile and practice progress.
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Icon } from '../../../components/dyscalculia/Icon';
 import { MathBackground } from '../../../components/dyscalculia/MathBackground';
 import { BigButton, Card, SiText, TopBar } from '../../../components/dyscalculia/ui';
 import { si } from '../../../constants/dyscalculia/strings.si';
@@ -40,37 +41,55 @@ export default function TeacherReport() {
   const [unlocked, setUnlocked] = useState(false);
   const [wrong, setWrong] = useState(false);
 
+  const tryPin = (value = pin) => {
+    Keyboard.dismiss();
+    if (value === TEACHER_PIN) setUnlocked(true);
+    else setWrong(true);
+  };
+
   if (!unlocked) {
     return (
       <View className="flex-1">
         <TopBar title={si.teacher.title} />
         <MathBackground>
-          <View className="flex-1 items-center justify-center">
-            <Card className="items-center" style={{ width: 340 }}>
-              <SiText weight="bold" style={{ fontSize: 18 }}>
-                🔐 {si.teacher.pinPrompt}
-              </SiText>
-              <TextInput
-                value={pin}
-                onChangeText={(t) => {
-                  setPin(t.replace(/\D/g, '').slice(0, 4));
-                  setWrong(false);
-                }}
-                keyboardType="number-pad"
-                secureTextEntry
-                maxLength={4}
-                accessibilityLabel={si.teacher.pinPrompt}
-                className="my-3 w-40 rounded-2xl py-2 text-center"
-                style={{ fontSize: 26, letterSpacing: 10, color: colors.ink, backgroundColor: colors.page, borderWidth: 2, borderColor: wrong ? colors.red : colors.border }}
-              />
-              {wrong ? <SiText style={{ color: colors.red, fontSize: 13, marginBottom: 6 }}>{si.teacher.wrongPin}</SiText> : null}
-              <BigButton
-                label={si.teacher.open}
-                onPress={() => (pin === TEACHER_PIN ? setUnlocked(true) : setWrong(true))}
-              />
-              <SiText style={{ fontSize: 12, color: colors.muted, marginTop: 8 }}>{si.teacher.pinHint}</SiText>
-            </Card>
-          </View>
+          {/* Tapping outside the PIN box closes the keyboard; the page scrolls when the keyboard is open. */}
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>
+            <Pressable onPress={Keyboard.dismiss} accessible={false} className="flex-1 flex-row items-center justify-center px-6 py-4">
+              <Card className="mr-4 items-center" style={{ width: 300 }}>
+                <Icon name="board" size={84} />
+                <SiText style={{ fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>{si.teacher.about}</SiText>
+              </Card>
+              <Card className="items-center" style={{ width: 300 }}>
+                <View className="flex-row items-center">
+                  <Icon name="lock" size={24} style={{ marginRight: 6 }} />
+                  <SiText weight="bold" style={{ fontSize: 17 }}>
+                    {si.teacher.pinPrompt}
+                  </SiText>
+                </View>
+                <TextInput
+                  value={pin}
+                  onChangeText={(t) => {
+                    const digits = t.replace(/\D/g, '').slice(0, 4);
+                    setPin(digits);
+                    setWrong(false);
+                    if (digits.length === 4) tryPin(digits); // closes the keyboard and opens the report
+                  }}
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={() => tryPin()}
+                  disableFullscreenUI
+                  secureTextEntry
+                  maxLength={4}
+                  accessibilityLabel={si.teacher.pinPrompt}
+                  className="my-3 w-40 rounded-2xl py-2 text-center"
+                  style={{ fontSize: 26, letterSpacing: 10, color: colors.ink, backgroundColor: colors.page, borderWidth: 2, borderColor: wrong ? colors.red : colors.border }}
+                />
+                {wrong ? <SiText style={{ color: colors.red, fontSize: 13, marginBottom: 6 }}>{si.teacher.wrongPin}</SiText> : null}
+                <BigButton label={si.teacher.open} onPress={() => tryPin()} />
+                <SiText style={{ fontSize: 12, color: colors.muted, marginTop: 8 }}>{si.teacher.pinHint}</SiText>
+              </Card>
+            </Pressable>
+          </ScrollView>
         </MathBackground>
       </View>
     );
@@ -165,7 +184,10 @@ export default function TeacherReport() {
           </View>
         )}
 
-        <SiText style={{ fontSize: 12, color: colors.muted, marginTop: 10, textAlign: 'center' }}>⚠ {si.teacher.disclaimer}</SiText>
+        <View className="mt-3 flex-row items-center justify-center">
+          <Icon name="info" size={16} style={{ marginRight: 6 }} />
+          <SiText style={{ fontSize: 12, color: colors.muted }}>{si.teacher.disclaimer}</SiText>
+        </View>
         <Pressable
           onPress={() => {
             reset();
