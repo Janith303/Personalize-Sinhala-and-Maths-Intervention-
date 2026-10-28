@@ -52,7 +52,7 @@ const ASSESSMENTS: Assessment[] = [
     color: "#7C4DDB",
     tint: "#F4EFFF",
     border: "#E4D9FF",
-    route:  "/sinhala-writing/assessment-1",
+    route:  "/sinhala-writing/assesment-1",
   },
   {
     n: 2,
