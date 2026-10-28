@@ -1,665 +1,681 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
-  ImageBackground,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ImageBackground,
+  Image,
+  ImageSourcePropType,
+  LayoutChangeEvent,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { router, Stack } from "expo-router";
+import { useSafeAreaInsets, EdgeInsets } from "react-native-safe-area-context";
 
-const assessmentModules = [
+// Put your kids illustration (transparent PNG) here, e.g.
+require("../../assets/images/sinhala-writing/hero-kids.png")
+const HERO_IMAGE: ImageSourcePropType | null = require("../../assets/images/sinhala-writing/hero-kids.png");
+
+const GREEN = "#1F7A4D";
+const NAVY = "#1E2A78";
+const GREY = "#6B7280";
+
+type Assessment = {
+  n: number;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  color: string;
+  tint: string;
+  border: string;
+  route: string | null;
+};
+
+type Module = {
+  n: number;
+  title: string;
+  subtitle: string;
+  color: string;
+  tint: string;
+  border: string;
+  route: string;
+  art: "letters" | "tracing" | "puzzle";
+};
+
+const ASSESSMENTS: Assessment[] = [
   {
-    id: "agayuma-1",
-    number: "1",
+    n: 1,
     title: "සිංහල ඇගයුම 1",
     subtitle: "සිංහල ලිවීම",
     emoji: "📝",
+    color: "#7C4DDB",
+    tint: "#F4EFFF",
+    border: "#E4D9FF",
+    route:  "/sinhala-writing/assessment-1",
   },
   {
-    id: "agayuma-2",
-    number: "2",
+    n: 2,
     title: "සිංහල ඇගයුම 2",
     subtitle: "ලිවීමේ කුසලතා",
     emoji: "📖",
+    color: "#3B82F6",
+    tint: "#EDF5FF",
+    border: "#D3E5FF",
+    route: null, // placeholder
   },
 ];
 
-const learningModules = [
+const MODULES: Module[] = [
   {
-    id: "mahaprana",
-    number: "1",
+    n: 3,
     title: "මහාප්‍රාණ අකුරු",
     subtitle: "හඳුනා ගනිමු",
-    emoji: "🔊",
+    color: "#F5B400",
+    tint: "#FFF8DC",
+    border: "#FCE7A6",
+    route: "/sinhala-writing/mahaprana",
+    art: "letters",
   },
   {
-    id: "letter-size",
-    number: "2",
+    n: 4,
     title: "අකුරු ප්‍රමාණය",
-    subtitle: "ලස්සනට ගනිමු",
-    emoji: "✏️",
+    subtitle: "ලස්සනට ලියමු",
+    color: "#2FB463",
+    tint: "#EBFBF0",
+    border: "#CDEFD8",
+    route: "/sinhala-writing/letter-size",
+    art: "tracing",
   },
   {
-    id: "sentence-building",
-    number: "3",
+    n: 5,
     title: "වාක්‍ය ගොඩනගමු",
     subtitle: "වාක්‍ය ලියමු",
-    emoji: "🧩",
+    color: "#EC407A",
+    tint: "#FFF0F5",
+    border: "#FBD3E2",
+    route: "/sinhala-writing/sentence-building",
+    art: "puzzle",
   },
 ];
 
-export default function SinhalaWritingHome() {
-  const router = useRouter();
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(Math.max(v, min), max);
 
-  const openModule = (id: string) => {
-    router.push(`/sinhala-writing/${id}` as any);
+/* ------------------------------------------------------------------
+   All sizes come from the real screen space, so the whole page
+   always fits without scrolling.
+------------------------------------------------------------------- */
+function computeSizes(w: number, h: number, insets: EdgeInsets) {
+  const pad = clamp(Math.min(w, h) * 0.03, 8, 24);
+  const availH = h - insets.top - insets.bottom - pad * 2;
+  const availW = w - insets.left - insets.right - pad * 2;
+
+  const gap = clamp(availH * 0.025, 6, 18);
+  const colGap = clamp(availW * 0.015, 8, 18);
+  const headerH = clamp(availH * 0.13, 40, 84);
+  const rest = availH - headerH - gap * 3;
+
+  // Height shares: hero / assessments / learning cards (add up to 1)
+  const heroH = rest * 0.33;
+  const row1H = rest * 0.29;
+  const row2H = rest * 0.38;
+
+  const artH = clamp(row2H * 0.55, 30, 110);
+
+  return {
+    w,
+    insets,
+    pad,
+    availW,
+    gap,
+    colGap,
+
+    // header
+    headerH,
+    backSize: headerH * 0.92,
+    headerTitle: clamp(headerH * 0.52, 18, 44),
+    headerSub: clamp(headerH * 0.21, 9, 18),
+
+    // hero
+    heroH,
+    heroTop: insets.top + pad + headerH + gap,
+    heroPadH: clamp(availW * 0.035, 12, 40),
+    heroTitle: clamp(heroH * 0.22, 16, 46),
+    heroDesc: clamp(heroH * 0.105, 11, 22),
+    heroSub: clamp(heroH * 0.075, 9, 16),
+    showHeroSub: heroH >= 110,
+    heroImgH: heroH * 1.32,
+
+    // assessment cards
+    row1H,
+    numCircle: clamp(row1H * 0.48, 22, 64),
+    iconBoxW: clamp(row1H * 0.82, 30, 110),
+    iconBoxH: clamp(row1H * 0.72, 28, 96),
+    card1Title: clamp(row1H * 0.2, 12, 30),
+    card1Sub: clamp(row1H * 0.13, 9, 18),
+    arrow1: clamp(row1H * 0.36, 20, 52),
+    card1PadH: clamp(row1H * 0.16, 8, 22),
+
+    // learning cards
+    row2H,
+    modPad: clamp(row2H * 0.08, 6, 18),
+    modNum: clamp(row2H * 0.24, 20, 56),
+    modTitle: clamp(row2H * 0.13, 12, 26),
+    modSub: clamp(row2H * 0.085, 9, 17),
+    arrow2: clamp(row2H * 0.26, 22, 56),
+    leaf: clamp(row2H * 0.09, 10, 22),
+    artH,
+    art: artH / 90, // scale factor for the little illustrations
+  };
+}
+
+type Sizes = ReturnType<typeof computeSizes>;
+
+export default function SinhalaWritingHome() {
+  const insets = useSafeAreaInsets();
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (width !== size.w || height !== size.h) setSize({ w: width, h: height });
+  };
+
+  const z = useMemo(
+    () => computeSizes(size.w, size.h, insets),
+    [size.w, size.h, insets]
+  );
+  const styles = useMemo(() => makeStyles(z), [z]);
+
+  const go = (route: string | null) => {
+    if (route) router.push(route as any);
+  };
+
+  /* ---------- small illustrations for the learning cards ---------- */
+  const renderArt = (art: Module["art"]) => {
+    const a = z.art;
+
+    if (art === "letters") {
+      return (
+        <View style={styles.artBox}>
+          <View style={[styles.tile, { left: 30 * a, top: 0, transform: [{ rotate: "-6deg" }] }]}>
+            <Text style={[styles.tileText, { color: "#E53935" }]}>ඛ</Text>
+          </View>
+          <View style={[styles.tile, { left: 0, top: 38 * a, transform: [{ rotate: "-12deg" }] }]}>
+            <Text style={[styles.tileText, { color: "#22A35A" }]}>ඝ</Text>
+          </View>
+          <View style={[styles.tile, { left: 62 * a, top: 30 * a, transform: [{ rotate: "10deg" }] }]}>
+            <Text style={[styles.tileText, { color: "#3B5BDB" }]}>ඡ</Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (art === "tracing") {
+      return (
+        <View style={styles.artBox}>
+          <View style={styles.paper}>
+            <Text style={styles.paperLetter}>අ</Text>
+          </View>
+          <Ionicons name="pencil" size={40 * a} color="#F5A623" style={styles.pencil} />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.artBox}>
+        <Ionicons name="extension-puzzle" size={54 * a} color="#3B82F6" style={{ position: "absolute", left: 4 * a, top: 8 * a }} />
+        <Ionicons name="extension-puzzle" size={54 * a} color="#FACC15" style={{ position: "absolute", left: 46 * a, top: 0 }} />
+        <Ionicons name="extension-puzzle" size={54 * a} color="#EC4899" style={{ position: "absolute", left: 22 * a, top: 40 * a }} />
+      </View>
+    );
   };
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/sinhala-writing/homebackground.png")}
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.backgroundOverlay}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* ================= HEADER ================= */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.logoCircle}>
-                <Text style={styles.logoEmoji}>📚</Text>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <ImageBackground
+        source={require("../../assets/images/sinhala-writing/homebackground.png")}
+        style={styles.container}
+        resizeMode="cover"
+        onLayout={onLayout}
+      >
+        {size.w > 0 && (
+          <>
+            <View style={styles.page}>
+              {/* ================= HEADER ================= */}
+              <View style={styles.header}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.backButton}
+                  onPress={() => router.back()}
+                >
+                  <Ionicons name="arrow-back" size={z.backSize * 0.5} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <View style={styles.headerTitleBox}>
+                  <Text style={styles.headerTitle} numberOfLines={1}>
+                    සිංහල ලිවීම
+                  </Text>
+                  <Text style={styles.headerSubtitle} numberOfLines={1}>
+                    අපි එකට ඉගෙන ගනිමු!
+                  </Text>
+                </View>
               </View>
 
-              <View>
-                <Text style={styles.appTitle}>සිංහල ලිවීම</Text>
-                <Text style={styles.appSubtitle}>
-                  අපි එකට ඉගෙන ගනිමු!
-                </Text>
-              </View>
-            </View>
+              {/* ================= HERO ================= */}
+              <View style={styles.heroCard}>
+                <Ionicons name="leaf" size={z.heroH * 0.12} color="#BFE6CB" style={{ position: "absolute", top: z.heroH * 0.1, left: z.heroPadH * 0.4 }} />
+                <Ionicons name="leaf" size={z.heroH * 0.1} color="#CDEFD8" style={{ position: "absolute", bottom: z.heroH * 0.12, left: z.heroPadH * 0.3 }} />
+                <Ionicons name="leaf" size={z.heroH * 0.14} color="#BFE6CB" style={{ position: "absolute", top: z.heroH * 0.12, right: z.heroPadH * 0.6 }} />
+                <Ionicons name="leaf" size={z.heroH * 0.12} color="#CDEFD8" style={{ position: "absolute", bottom: z.heroH * 0.12, right: z.heroPadH * 0.4 }} />
 
-            <View style={styles.headerRight}>
-              <View style={styles.progressContainer}>
-                <Text style={styles.progressLabel}>ඔබේ ප්‍රගතිය</Text>
-
-                <View style={styles.progressBarBackground}>
-                  <View style={styles.progressBarFill} />
-                </View>
-
-                <Text style={styles.progressText}>0%</Text>
-              </View>
-
-              <View style={styles.profileCircle}>
-                <Text style={styles.profileEmoji}>👦</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ================= WELCOME CARD ================= */}
-          <View style={styles.welcomeCard}>
-            <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeTitle}>ආයුබෝවන්! 👋</Text>
-
-              <Text style={styles.welcomeDescription}>
-                සිංහල ලිවීමේ හැකියාව වැඩි දියුණු කරගනිමු.
-              </Text>
-
-              <Text style={styles.welcomeSmallText}>
-                ඔබට අවශ්‍ය පාඩමක් තෝරාගෙන ඉගෙනීම ආරම්භ කරන්න.
-              </Text>
-            </View>
-
-            <View style={styles.welcomeIconContainer}>
-              <Text style={styles.welcomeEmoji}>✍️</Text>
-            </View>
-          </View>
-
-          {/* ================= ASSESSMENT SECTION ================= */}
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>සිංහල ඇගයීම්</Text>
-              <Text style={styles.sectionSubtitle}>
-                ඔබේ ලිවීමේ හැකියාව පරීක්ෂා කරමු
-              </Text>
-            </View>
-
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>ඇගයීම් 2</Text>
-            </View>
-          </View>
-
-          <View style={styles.assessmentRow}>
-            {assessmentModules.map((module) => (
-              <TouchableOpacity
-                key={module.id}
-                activeOpacity={0.85}
-                style={styles.assessmentCard}
-                onPress={() => openModule(module.id)}
-              >
-                <View style={styles.cardNumberCircle}>
-                  <Text style={styles.cardNumber}>{module.number}</Text>
-                </View>
-
-                <View style={styles.cardEmojiContainer}>
-                  <Text style={styles.cardEmoji}>{module.emoji}</Text>
-                </View>
-
-                <View style={styles.cardTextContainer}>
-                  <Text style={styles.cardTitle}>{module.title}</Text>
-                  <Text style={styles.cardSubtitle}>{module.subtitle}</Text>
-                </View>
-
-                <View style={styles.arrowCircle}>
-                  <Text style={styles.arrowText}>→</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* ================= LEARNING SECTION ================= */}
-          <View style={[styles.sectionHeader, styles.learningHeader]}>
-            <View>
-              <Text style={styles.sectionTitle}>ඉගෙන ගනිමු</Text>
-              <Text style={styles.sectionSubtitle}>
-                සිංහල ලිවීමේ කුසලතා වර්ධනය කරමු
-              </Text>
-            </View>
-
-            <View style={styles.sectionBadgeLearning}>
-              <Text style={styles.sectionBadgeText}>පාඩම් 3</Text>
-            </View>
-          </View>
-
-          <View style={styles.learningRow}>
-            {learningModules.map((module) => (
-              <TouchableOpacity
-                key={module.id}
-                activeOpacity={0.85}
-                style={styles.learningCard}
-                onPress={() => openModule(module.id)}
-              >
-                <View style={styles.learningCardTop}>
-                  <View style={styles.learningNumberCircle}>
-                    <Text style={styles.learningNumber}>
-                      {module.number}
+                <View style={styles.heroTextBox}>
+                  <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                    ආයුබෝවන්! 👋
+                  </Text>
+                  <Text style={styles.heroDescription} numberOfLines={2} adjustsFontSizeToFit>
+                    සිංහල ලිවීමේ හැකියාව වැඩි දියුණු කරගනිමු.
+                  </Text>
+                  {z.showHeroSub && (
+                    <Text style={styles.heroSubText} numberOfLines={1} adjustsFontSizeToFit>
+                      ඔබට අවශ්‍ය පාඩමක් තෝරාගෙන ඉගෙනීම ආරම්භ කරන්න.
                     </Text>
-                  </View>
-
-                  <Text style={styles.learningEmoji}>{module.emoji}</Text>
+                  )}
                 </View>
+              </View>
 
-                <Text style={styles.learningTitle}>{module.title}</Text>
+              {/* ================= ROW 1: ASSESSMENTS ================= */}
+              <View style={[styles.row, { height: z.row1H }]}>
+                {ASSESSMENTS.map((a) => (
+                  <TouchableOpacity
+                    key={a.n}
+                    activeOpacity={0.85}
+                    onPress={() => go(a.route)}
+                    style={[styles.assessmentCard, { backgroundColor: a.tint, borderColor: a.border }]}
+                  >
+                    <View style={[styles.numberCircle, { backgroundColor: a.color }]}>
+                      <Text style={styles.numberText}>{a.n}</Text>
+                    </View>
 
-                <Text style={styles.learningSubtitle}>
-                  {module.subtitle}
-                </Text>
+                    <View style={[styles.assessmentIconBox, { backgroundColor: a.border }]}>
+                      <Text style={styles.assessmentEmoji}>{a.emoji}</Text>
+                    </View>
 
-                <View style={styles.startButton}>
-                  <Text style={styles.startButtonText}>ආරම්භ කරන්න</Text>
-                  <Text style={styles.startArrow}>→</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+                    <View style={styles.assessmentTextBox}>
+                      <Text style={styles.cardTitle} numberOfLines={1} adjustsFontSizeToFit>
+                        {a.title}
+                      </Text>
+                      <Text style={styles.cardSubtitle} numberOfLines={1}>
+                        {a.subtitle}
+                      </Text>
+                    </View>
 
-          {/* ================= FOOTER ================= */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              🌟 දිනපතා පුහුණුවීමෙන් ඔබේ ලිවීම තවත් ලස්සන වේ!
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </ImageBackground>
+                    <View style={[styles.arrow1, { backgroundColor: a.border }]}>
+                      <Ionicons name="chevron-forward" size={z.arrow1 * 0.5} color={a.color} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* ================= ROW 2: LEARNING CARDS ================= */}
+              <View style={[styles.row, { height: z.row2H }]}>
+                {MODULES.map((m) => (
+                  <TouchableOpacity
+                    key={m.n}
+                    activeOpacity={0.85}
+                    onPress={() => go(m.route)}
+                    style={[styles.moduleCard, { backgroundColor: m.tint, borderColor: m.border }]}
+                  >
+                    <Ionicons name="leaf" size={z.leaf} color="#9ED8A4" style={styles.leaf} />
+
+                    {/* Left: number + illustration */}
+                    <View style={styles.moduleLeft}>
+                      <View style={[styles.moduleNumber, { backgroundColor: m.color }]}>
+                        <Text style={styles.moduleNumberText}>{m.n}</Text>
+                      </View>
+                      <View style={styles.artWrap}>{renderArt(m.art)}</View>
+                    </View>
+
+                    {/* Right: title + arrow */}
+                    <View style={styles.moduleRight}>
+                      <View>
+                        <Text style={styles.moduleTitle} numberOfLines={1} adjustsFontSizeToFit>
+                          {m.title}
+                        </Text>
+                        <Text style={styles.moduleSubtitle} numberOfLines={1}>
+                          {m.subtitle}
+                        </Text>
+                      </View>
+
+                      <View style={[styles.arrow2, { backgroundColor: m.color }]}>
+                        <Ionicons name="chevron-forward" size={z.arrow2 * 0.55} color="#FFFFFF" />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Kids illustration – sits on the right of the hero and pokes out above it */}
+            {HERO_IMAGE ? (
+              <Image
+                source={HERO_IMAGE}
+                resizeMode="contain"
+                pointerEvents="none"
+                style={styles.heroImage}
+              />
+            ) : null}
+          </>
+        )}
+      </ImageBackground>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  // ============================================================
-  // MAIN CONTAINER
-  // ============================================================
+const makeStyles = (z: Sizes) =>
+  StyleSheet.create({
+    container: { flex: 1 },
 
-  container: {
-    flex: 1,
-  },
-
-  backgroundOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(245, 250, 255, 0.12)",
-  },
-
-  scrollContent: {
-    paddingHorizontal: 28,
-    paddingTop: 20,
-    paddingBottom: 28,
-  },
-
-  // ============================================================
-  // HEADER
-  // ============================================================
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  logoCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
+    page: {
+      flex: 1,
+      paddingTop: z.insets.top + z.pad,
+      paddingBottom: z.insets.bottom + z.pad,
+      paddingLeft: z.insets.left + z.pad,
+      paddingRight: z.insets.right + z.pad,
+      gap: z.gap,
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    elevation: 4,
-  },
 
-  logoEmoji: {
-    fontSize: 29,
-  },
+    row: { flexDirection: "row", gap: z.colGap },
 
-  appTitle: {
-    fontSize: 25,
-    fontWeight: "800",
-    color: "#35205F",
-  },
+    /* ================= HEADER ================= */
 
-  appSubtitle: {
-    fontSize: 13,
-    color: "#66577C",
-    marginTop: 2,
-    fontWeight: "500",
-  },
-
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  progressContainer: {
-    marginRight: 18,
-    alignItems: "flex-end",
-  },
-
-  progressLabel: {
-    fontSize: 12,
-    color: "#5C4B72",
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-
-  progressBarBackground: {
-    width: 120,
-    height: 8,
-    backgroundColor: "rgba(255,255,255,0.75)",
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-
-  progressBarFill: {
-    width: "0%",
-    height: "100%",
-    backgroundColor: "#7B5CC4",
-    borderRadius: 10,
-  },
-
-  progressText: {
-    fontSize: 10,
-    color: "#6A5882",
-    fontWeight: "700",
-    marginTop: 3,
-  },
-
-  profileCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    header: {
+      height: z.headerH,
+      flexDirection: "row",
+      alignItems: "center",
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
 
-  profileEmoji: {
-    fontSize: 25,
-  },
-
-  // ============================================================
-  // WELCOME CARD
-  // ============================================================
-
-  welcomeCard: {
-    minHeight: 105,
-    borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.91)",
-    paddingHorizontal: 24,
-    paddingVertical: 17,
-
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-
-    marginBottom: 20,
-
-    shadowColor: "#4C3570",
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    backButton: {
+      width: z.backSize,
+      height: z.backSize,
+      borderRadius: z.backSize / 2,
+      backgroundColor: "#2E8B57",
+      borderWidth: 3,
+      borderColor: "#FFFFFF",
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 5,
+      shadowColor: "#000",
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
 
-  welcomeTextContainer: {
-    flex: 1,
-    paddingRight: 20,
-  },
+    headerTitleBox: { flex: 1, marginLeft: z.headerH * 0.28 },
 
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#35205F",
-    marginBottom: 5,
-  },
-
-  welcomeDescription: {
-    fontSize: 15,
-    color: "#4E4260",
-    fontWeight: "600",
-    marginBottom: 3,
-  },
-
-  welcomeSmallText: {
-    fontSize: 12,
-    color: "#756A82",
-  },
-
-  welcomeIconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#F0E8FF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  welcomeEmoji: {
-    fontSize: 38,
-  },
-
-  // ============================================================
-  // SECTION HEADER
-  // ============================================================
-
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 11,
-  },
-
-  learningHeader: {
-    marginTop: 20,
-  },
-
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#35205F",
-  },
-
-  sectionSubtitle: {
-    fontSize: 11,
-    color: "#716580",
-    marginTop: 2,
-  },
-
-  sectionBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: "#E8DEFA",
-  },
-
-  sectionBadgeLearning: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: "#FFF0C7",
-  },
-
-  sectionBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#5A3A8A",
-  },
-
-  // ============================================================
-  // ASSESSMENT CARDS
-  // ============================================================
-
-  assessmentRow: {
-    flexDirection: "row",
-    gap: 15,
-  },
-
-  assessmentCard: {
-    flex: 1,
-    minHeight: 112,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderRadius: 20,
-
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-
-    flexDirection: "row",
-    alignItems: "center",
-
-    shadowColor: "#4C3570",
-    shadowOffset: {
-      width: 0,
-      height: 3,
+    headerTitle: {
+      fontSize: z.headerTitle,
+      lineHeight: z.headerTitle * 1.3,
+      fontWeight: "900",
+      color: GREEN,
+      textShadowColor: "#FFFFFF",
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 8,
     },
-    shadowOpacity: 0.11,
-    shadowRadius: 7,
-    elevation: 3,
-  },
 
-  cardNumberCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#7B5CC4",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-
-  cardNumber: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  cardEmojiContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    backgroundColor: "#F0E8FF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-
-  cardEmoji: {
-    fontSize: 25,
-  },
-
-  cardTextContainer: {
-    flex: 1,
-  },
-
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#35205F",
-  },
-
-  cardSubtitle: {
-    fontSize: 11,
-    color: "#746780",
-    marginTop: 3,
-  },
-
-  arrowCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F4EEFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 8,
-  },
-
-  arrowText: {
-    fontSize: 18,
-    color: "#704DB0",
-    fontWeight: "800",
-  },
-
-  // ============================================================
-  // LEARNING CARDS
-  // ============================================================
-
-  learningRow: {
-    flexDirection: "row",
-    gap: 15,
-  },
-
-  learningCard: {
-    flex: 1,
-    minHeight: 165,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderRadius: 20,
-
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-
-    shadowColor: "#4C3570",
-    shadowOffset: {
-      width: 0,
-      height: 3,
+    headerSubtitle: {
+      fontSize: z.headerSub,
+      lineHeight: z.headerSub * 1.3,
+      fontWeight: "700",
+      color: "#24324F",
+      textShadowColor: "#FFFFFF",
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 6,
     },
-    shadowOpacity: 0.11,
-    shadowRadius: 7,
-    elevation: 3,
-  },
 
-  learningCardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
+    /* ================= HERO ================= */
 
-  learningNumberCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F4C95D",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    heroCard: {
+      height: z.heroH,
+      marginHorizontal: z.availW * 0.05,
+      backgroundColor: "rgba(255,255,255,0.88)",
+      borderRadius: clamp(z.heroH * 0.16, 14, 32),
+      borderWidth: 1.5,
+      borderColor: "#D5EEDC",
+      paddingHorizontal: z.heroPadH,
+      justifyContent: "center",
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+    },
 
-  learningNumber: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#5D4612",
-  },
+    heroTextBox: { maxWidth: "55%" },
 
-  learningEmoji: {
-    fontSize: 30,
-  },
+    heroTitle: {
+      fontSize: z.heroTitle,
+      lineHeight: z.heroTitle * 1.4,
+      fontWeight: "900",
+      color: GREEN,
+    },
 
-  learningTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#35205F",
-    marginBottom: 3,
-  },
+    heroDescription: {
+      fontSize: z.heroDesc,
+      lineHeight: z.heroDesc * 1.5,
+      fontWeight: "800",
+      color: NAVY,
+    },
 
-  learningSubtitle: {
-    fontSize: 11,
-    color: "#746780",
-    marginBottom: 12,
-  },
+    heroSubText: {
+      fontSize: z.heroSub,
+      lineHeight: z.heroSub * 1.5,
+      color: GREY,
+      marginTop: 2,
+    },
 
-  startButton: {
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F1E9FF",
+    heroImage: {
+      position: "absolute",
+      height: z.heroImgH,
+      width: z.heroImgH * 1.55,
+      top: z.heroTop + z.heroH - z.heroImgH,
+      right: z.insets.right + z.pad + z.availW * 0.12,
+    },
 
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    /* ================= ASSESSMENT CARDS ================= */
 
-    paddingHorizontal: 12,
-  },
+    assessmentCard: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: clamp(z.row1H * 0.2, 12, 28),
+      borderWidth: 1.5,
+      paddingHorizontal: z.card1PadH,
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOpacity: 0.07,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
 
-  startButtonText: {
-    fontSize: 11,
-    color: "#63439A",
-    fontWeight: "700",
-    marginRight: 5,
-  },
+    numberCircle: {
+      width: z.numCircle,
+      height: z.numCircle,
+      borderRadius: z.numCircle / 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  startArrow: {
-    fontSize: 15,
-    color: "#63439A",
-    fontWeight: "800",
-  },
+    numberText: {
+      color: "#FFFFFF",
+      fontSize: z.numCircle * 0.42,
+      fontWeight: "900",
+    },
 
-  // ============================================================
-  // FOOTER
-  // ============================================================
+    assessmentIconBox: {
+      width: z.iconBoxW,
+      height: z.iconBoxH,
+      borderRadius: z.iconBoxH * 0.22,
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: z.card1PadH,
+    },
 
-  footer: {
-    alignItems: "center",
-    marginTop: 18,
-  },
+    assessmentEmoji: { fontSize: z.iconBoxH * 0.55 },
 
-  footerText: {
-    fontSize: 11,
-    color: "#6D5D7D",
-    fontWeight: "600",
-  },
-});
+    assessmentTextBox: { flex: 1, marginLeft: z.card1PadH },
+
+    cardTitle: {
+      fontSize: z.card1Title,
+      lineHeight: z.card1Title * 1.35,
+      fontWeight: "900",
+      color: NAVY,
+    },
+
+    cardSubtitle: {
+      fontSize: z.card1Sub,
+      lineHeight: z.card1Sub * 1.35,
+      color: "#3A4A7A",
+    },
+
+    arrow1: {
+      width: z.arrow1,
+      height: z.arrow1,
+      borderRadius: z.arrow1 / 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    /* ================= LEARNING CARDS ================= */
+
+    moduleCard: {
+      flex: 1,
+      flexDirection: "row",
+      borderRadius: clamp(z.row2H * 0.14, 12, 28),
+      borderWidth: 1.5,
+      padding: z.modPad,
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOpacity: 0.07,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
+
+    leaf: {
+      position: "absolute",
+      top: z.modPad,
+      left: "42%",
+    },
+
+    moduleLeft: {
+      width: 120 * z.art,
+      alignSelf: "stretch",
+    },
+
+    moduleNumber: {
+      width: z.modNum,
+      height: z.modNum,
+      borderRadius: z.modNum / 2,
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2,
+    },
+
+    moduleNumberText: {
+      color: "#FFFFFF",
+      fontSize: z.modNum * 0.42,
+      fontWeight: "900",
+    },
+
+    artWrap: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+    },
+
+    moduleRight: {
+      flex: 1,
+      marginLeft: z.modPad,
+      justifyContent: "space-between",
+      paddingTop: z.modNum * 0.3,
+    },
+
+    moduleTitle: {
+      fontSize: z.modTitle,
+      lineHeight: z.modTitle * 1.35,
+      fontWeight: "900",
+      color: NAVY,
+    },
+
+    moduleSubtitle: {
+      fontSize: z.modSub,
+      lineHeight: z.modSub * 1.35,
+      color: "#3A4A7A",
+    },
+
+    arrow2: {
+      alignSelf: "flex-end",
+      width: z.arrow2,
+      height: z.arrow2,
+      borderRadius: z.arrow2 / 2,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+
+    /* ================= CARD ILLUSTRATIONS ================= */
+
+    artBox: { width: 116 * z.art, height: z.artH },
+
+    tile: {
+      position: "absolute",
+      width: 50 * z.art,
+      height: 50 * z.art,
+      borderRadius: 12 * z.art,
+      backgroundColor: "#FFFFFF",
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+
+    tileText: { fontSize: 30 * z.art, fontWeight: "900" },
+
+    paper: {
+      position: "absolute",
+      left: 4 * z.art,
+      top: 6 * z.art,
+      width: 76 * z.art,
+      height: 78 * z.art,
+      borderRadius: 8 * z.art,
+      backgroundColor: "#FFFFFF",
+      borderWidth: 1,
+      borderColor: "#E5E7EB",
+      alignItems: "center",
+      justifyContent: "center",
+      transform: [{ rotate: "-8deg" }],
+      elevation: 2,
+    },
+
+    paperLetter: {
+      fontSize: 48 * z.art,
+      color: "#B0B8C4",
+      fontWeight: "300",
+    },
+
+    pencil: {
+      position: "absolute",
+      right: 0,
+      bottom: 0,
+      transform: [{ rotate: "15deg" }],
+    },
+  });
