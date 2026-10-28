@@ -26,7 +26,7 @@ type HomeCard = {
 const CARDS: HomeCard[] = [
   {
     title: "ගණිත ක්‍රියාකාරකම්",
-    subtitle: "(එකතු, අඩු, ගුණ, බෙදීම්)",
+    subtitle: "(+, −, ×, ÷)",
     route: "/maths-slow/operations",
     cardBg: "#FFF7E6",
     cardBorder: "#F3DDB0",
