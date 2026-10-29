@@ -62,7 +62,7 @@ const ASSESSMENTS: Assessment[] = [
     color: "#3B82F6",
     tint: "#EDF5FF",
     border: "#D3E5FF",
-    route: null, // placeholder
+    route: "/sinhala-writing/assesment-2", // placeholder
   },
 ];
 
