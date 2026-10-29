@@ -9,6 +9,8 @@ import {
   ImageSourcePropType,
   LayoutChangeEvent,
   Alert,
+  ToastAndroid,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
@@ -17,8 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const DESIGN_WIDTH = 1100;
 const DESIGN_HEIGHT = 660;
 
-/* Optional girl picture (transparent PNG), e.g.
-   require("../../../assets/images/sinhala-writing/girl-pointing.png") */
+/* Optional girl picture (transparent PNG) */
 const GIRL_IMAGE: ImageSourcePropType | null = require("../../../assets/images/sinhala-writing/girll.png");
 
 const GREEN = "#1F8A3B";
@@ -65,8 +66,15 @@ export default function AkuruPramanayaHome() {
   const styles = useMemo(() => createStyles(scale), [scale]);
 
   const open = (route: string | null) => {
-    if (route) router.push(route as any);
-    else Alert.alert("", "මෙම කොටස ඉක්මනින් එකතු කෙරේ.");
+    if (route) {
+      router.push(route as any);
+      return;
+    }
+    if (Platform.OS === "android") {
+      ToastAndroid.show("මෙම කොටස ඉක්මනින් එකතු කෙරේ", ToastAndroid.SHORT);
+    } else {
+      Alert.alert("", "මෙම කොටස ඉක්මනින් එකතු කෙරේ.");
+    }
   };
 
   return (

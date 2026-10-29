@@ -94,7 +94,7 @@ const MODULES: Module[] = [
     color: "#EC407A",
     tint: "#FFF0F5",
     border: "#FBD3E2",
-    route: "/sinhala-writing/sentence-building",
+    route: "/sinhala-writing/wakyagodanagamu",
     art: "puzzle",
   },
 ];
