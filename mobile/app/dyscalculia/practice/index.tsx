@@ -10,7 +10,7 @@ import { CHARACTERS, Screen, StarPill } from '@/components/dyscalculia/kit';
 import { si } from '@/constants/dyscalculia/strings.si';
 import { areaColors, colors } from '@/constants/dyscalculia/theme';
 import { useDyscalculia } from '@/contexts/dyscalculia/DyscalculiaContext';
-import type { SkillArea } from '@/types/dyscalculia';
+import { AREA_GROUP, type SkillArea } from '@/types/dyscalculia';
 import { MAX_LEVEL } from '@/utils/dyscalculia/questions';
 
 const AREAS: { area: SkillArea; character: number }[] = [
@@ -25,7 +25,8 @@ const openLevel = (area: SkillArea, level: number) =>
 export default function PracticeMap() {
   const { s } = useU();
   const { stars, progress, profile } = useDyscalculia();
-  const needs = new Set(profile?.filter((a) => a.needsSupport).map((a) => a.area));
+  // Areas whose Stage 2 group needs support are recommended first
+  const needs = new Set(AREAS.filter(({ area }) => profile?.groups.find((g) => g.group === AREA_GROUP[area])?.needsSupport).map(({ area }) => area));
 
   return (
     <Screen

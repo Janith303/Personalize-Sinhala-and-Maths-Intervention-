@@ -5,8 +5,8 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-import type { ScreeningReport, TrialResult } from '@/types/dyscalculia';
-import { demoReport } from '@/utils/dyscalculia/scoring';
+import { AREA_GROUP, type ProfileReport, type QuestionResult, type ScreeningReport, type TrialResult } from '@/types/dyscalculia';
+import { demoReport, localProfile } from '@/utils/dyscalculia/scoring';
 
 const PORT = 8000;
 const TIMEOUT_MS = 6000;
@@ -22,22 +22,34 @@ function resolveBaseUrl(): string {
 
 export const API_BASE_URL = resolveBaseUrl();
 
-export async function scoreScreening(childName: string, trials: TrialResult[]): Promise<ScreeningReport> {
+/** POST to the backend; null if it fails or takes longer than TIMEOUT_MS. */
+async function post<T>(path: string, body: unknown): Promise<T | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(`${API_BASE_URL}/api/dyscalculia/screenings`, {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ child: { nickname: childName }, trials }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
-    if (res.ok) return (await res.json()) as ScreeningReport;
-    console.warn('[dyscalculia] backend returned', res.status);
+    if (res.ok) return (await res.json()) as T;
+    console.warn('[dyscalculia] backend returned', res.status, path);
   } catch (err) {
-    console.warn('[dyscalculia] backend not reachable, using demo scoring', err);
+    console.warn('[dyscalculia] backend not reachable, using local scoring', path, err);
   } finally {
     clearTimeout(timer);
   }
-  return demoReport(trials);
+  return null;
+}
+
+/** Stage 1: trained model on the backend, demo scoring as fallback. */
+export async function scoreScreening(childName: string, trials: TrialResult[]): Promise<ScreeningReport> {
+  return (await post<ScreeningReport>('/api/dyscalculia/screenings', { child: { nickname: childName }, trials })) ?? demoReport(trials);
+}
+
+/** Stage 2: rule-based profile on the backend, the same rules in the app as fallback. */
+export async function scoreProfile(childName: string, results: QuestionResult[]): Promise<ProfileReport> {
+  const answers = results.map((r) => ({ group: AREA_GROUP[r.area], kind: r.kind, correct: r.correct, rtMs: r.rtMs }));
+  return (await post<ProfileReport>('/api/dyscalculia/profiles', { child: { nickname: childName }, answers })) ?? localProfile(results);
 }

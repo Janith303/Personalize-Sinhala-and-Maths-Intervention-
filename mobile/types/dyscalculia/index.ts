@@ -51,12 +51,34 @@ export interface ScreeningReport {
 
 export type SkillArea = 'quantity' | 'sequence' | 'operations';
 
-export interface AreaResult {
-  area: SkillArea;
+/** Stage 2 groups (after Kosc, 1974). Each matches one skill area of the games. */
+export type DyscalculiaGroup = 'practognostic' | 'sequential' | 'operational';
+
+export const AREA_GROUP: Record<SkillArea, DyscalculiaGroup> = {
+  quantity: 'practognostic',
+  sequence: 'sequential',
+  operations: 'operational',
+};
+
+export interface GroupResult {
+  group: DyscalculiaGroup;
+  name: string;
+  explanation: string;
   correct: number;
   total: number;
-  accuracy: number;
+  accuracy: number | null;
+  medianRtMs: number | null;
   needsSupport: boolean;
+  reason: 'accuracy' | 'speed' | null;
+}
+
+/** Same shape as the backend's ProfileReport (Backend/app/schemas/dyscalculia/profile.py). */
+export interface ProfileReport {
+  groups: GroupResult[];
+  /** Group(s) needing support, or a single 'unclassified' item. */
+  profile: { group: DyscalculiaGroup | 'unclassified'; name: string; explanation: string }[];
+  source: 'rules' | 'local';
+  date: string;
 }
 
 /** Visual shown above the answer buttons of a multiple-choice question. */

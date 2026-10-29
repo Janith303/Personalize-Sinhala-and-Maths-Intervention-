@@ -2,7 +2,7 @@
 // learning profile and practice progress. Kept in memory for now (lost when the app restarts);
 // it will be saved through the backend once the shared children/auth flow is ready.
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { AreaResult, PracticeProgress, ScreeningReport, SkillArea } from '../../types/dyscalculia';
+import type { PracticeProgress, ProfileReport, ScreeningReport, SkillArea } from '../../types/dyscalculia';
 import { MAX_LEVEL } from '../../utils/dyscalculia/questions';
 
 const emptyProgress = (): Record<SkillArea, PracticeProgress> => ({
@@ -15,12 +15,12 @@ interface DyscalculiaState {
   childName: string;
   stars: number;
   screening: ScreeningReport | null;
-  profile: AreaResult[] | null;
+  profile: ProfileReport | null;
   progress: Record<SkillArea, PracticeProgress>;
   setChildName: (name: string) => void;
   addStars: (n: number) => void;
   saveScreening: (report: ScreeningReport) => void;
-  saveProfile: (areas: AreaResult[]) => void;
+  saveProfile: (report: ProfileReport) => void;
   savePractice: (area: SkillArea, level: number, stars: number) => void;
   reset: () => void;
 }
@@ -31,7 +31,7 @@ export function DyscalculiaProvider({ children }: { children: ReactNode }) {
   const [childName, setChildName] = useState('');
   const [stars, setStars] = useState(0);
   const [screening, setScreening] = useState<ScreeningReport | null>(null);
-  const [profile, setProfile] = useState<AreaResult[] | null>(null);
+  const [profile, setProfile] = useState<ProfileReport | null>(null);
   const [progress, setProgress] = useState(emptyProgress);
 
   const value: DyscalculiaState = {

@@ -5,7 +5,16 @@
 // ds004791 (z-scores). The feature definitions match the dataset: accuracy counts omissions as errors,
 // reaction time is the median of correct trials.
 import { si } from '../../constants/dyscalculia/strings.si';
-import type { AreaResult, QuestionResult, ScreeningReport, ScreeningTask, SkillArea, TrialResult } from '../../types/dyscalculia';
+import {
+  AREA_GROUP,
+  type DyscalculiaGroup,
+  type GroupResult,
+  type ProfileReport,
+  type QuestionResult,
+  type ScreeningReport,
+  type ScreeningTask,
+  type TrialResult,
+} from '../../types/dyscalculia';
 
 /** Mean and SD of the typically developing group (n = 38) in ds004791. */
 const REFERENCE: Record<string, { mean: number; sd: number }> = {
@@ -111,15 +120,44 @@ export function demoReport(trials: TrialResult[]): ScreeningReport {
   };
 }
 
-/** Stage 2: accuracy per skill area; below 70 % = needs support. */
-export function summariseAreas(results: QuestionResult[]): AreaResult[] {
-  const areas: SkillArea[] = ['quantity', 'sequence', 'operations'];
-  return areas.map((area) => {
-    const rs = results.filter((r) => r.area === area);
+// Stage 2 rules, used only when the backend cannot be reached. They mirror
+// Backend/app/services/dyscalculia/profile_service.py: a group needs support when accuracy < 70 %,
+// or when the child is accurate but > 1.5x slower there than in the other groups (and > 6 s).
+const MIN_ACCURACY = 0.7;
+const SLOW_FACTOR = 1.5;
+const SLOW_MIN_MS = 6000;
+const GROUP_ORDER: DyscalculiaGroup[] = ['practognostic', 'sequential', 'operational'];
+
+export function localProfile(results: QuestionResult[]): ProfileReport {
+  const stats = GROUP_ORDER.map((group) => {
+    const rs = results.filter((r) => AREA_GROUP[r.area] === group);
     const correct = rs.filter((r) => r.correct).length;
-    const accuracy = rs.length ? correct / rs.length : 0;
-    return { area, correct, total: rs.length, accuracy, needsSupport: accuracy < 0.7 };
+    return {
+      group,
+      correct,
+      total: rs.length,
+      accuracy: rs.length ? correct / rs.length : null,
+      medianRtMs: median(rs.filter((r) => r.correct).map((r) => r.rtMs)),
+    };
   });
+  const groups: GroupResult[] = stats.map((st) => {
+    let reason: GroupResult['reason'] = null;
+    if (st.accuracy != null && st.accuracy < MIN_ACCURACY) reason = 'accuracy';
+    else {
+      const others = stats.filter((o) => o.group !== st.group && o.medianRtMs != null).map((o) => o.medianRtMs as number);
+      const othersMedian = median(others);
+      if (st.medianRtMs != null && othersMedian != null && st.medianRtMs > SLOW_FACTOR * othersMedian && st.medianRtMs > SLOW_MIN_MS)
+        reason = 'speed';
+    }
+    return { ...st, name: si.groups.names[st.group], explanation: si.groups.explanations[st.group], needsSupport: reason != null, reason };
+  });
+  const weak = groups.filter((g) => g.needsSupport).map((g) => g.group);
+  const profile = (weak.length ? weak : (['unclassified'] as const)).map((g) => ({
+    group: g,
+    name: si.groups.names[g],
+    explanation: si.groups.explanations[g],
+  }));
+  return { groups, profile, source: 'local', date: new Date().toISOString() };
 }
 
 /** Stars for a practice session: 3 = 90 %+, 2 = 70 %+, 1 = 50 %+. */

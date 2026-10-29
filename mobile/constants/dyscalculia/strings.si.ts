@@ -106,6 +106,22 @@ export const si = {
     operations: 'ගණිත ක්‍රියා',
   } satisfies Record<SkillArea, string>,
 
+  // Stage 2 groups (same text as Backend/app/services/dyscalculia/profile_service.py)
+  groups: {
+    names: {
+      practognostic: 'ප්‍රැක්ටොග්නොස්ටික් (Practognostic)',
+      sequential: 'අනුක්‍රමික (Sequential)',
+      operational: 'ක්‍රියාකාරී (Operational)',
+      unclassified: 'වර්ගීකරණය නොකළ (Unclassified)',
+    },
+    explanations: {
+      practognostic: 'ප්‍රමාණ හඳුනාගැනීමට හා ගණන් කිරීමට සහාය අවශ්‍යයි',
+      sequential: 'අංක පිළිවෙළ හා රටා හඳුනාගැනීමට සහාය අවශ්‍යයි',
+      operational: 'එකතු කිරීම, අඩු කිරීම වැනි ගණිත ක්‍රියාවලට සහාය අවශ්‍යයි',
+      unclassified: 'කිසිදු එක් ක්ෂේත්‍රයක් පැහැදිලිව දුර්වල නැත. ගුරු නිරීක්ෂණය හා වැඩිදුර ඇගයීම නිර්දේශ කෙරේ.',
+    },
+  },
+
   profile: {
     introTitle: 'තවත් ක්‍රීඩා',
     explain: 'ගණන් කිරීම, අංක පිළිවෙළ සහ ගණිත ක්‍රියා ගැන ක්‍රීඩා 3ක්.',
@@ -178,6 +194,8 @@ export const si = {
     controlLow: 'හැඩ හා මුහුණු ක්‍රීඩාවල ද ලකුණු අඩුයි (ගණිතයට පමණක් සීමා නොවේ)',
     guessing: 'පිළිතුරු ඉතා ඉක්මනින් හා අහඹු ලෙස දී ඇති බව පෙනේ. නැවත පරීක්ෂා කරන්න.',
     needsSupport: 'සහාය අවශ්‍යයි',
+    slowArea: 'නිවැරදියි, නමුත් ඉතා සෙමින්',
+    profileNote: 'නියමයන් මත පදනම් වූ පැතිකඩකි (ලේබල් කළ දත්ත නොමැත), රෝග විනිශ්චයක් නොවේ.',
     strength: 'ශක්තිමත්',
     levelReached: (n: number) => `ළඟා වූ මට්ටම: ${n} / 4`,
     disclaimer: 'මෙය තිරගත කිරීමක් පමණි, රෝග විනිශ්චයක් නොවේ. තහවුරු කිරීමට මනෝවිද්‍යාඥයෙකු හමුවන්න.',

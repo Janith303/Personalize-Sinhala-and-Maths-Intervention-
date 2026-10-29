@@ -11,7 +11,9 @@ import { Btn3D, Highlight, PaperCard, Screen } from '@/components/dyscalculia/ki
 import { si } from '@/constants/dyscalculia/strings.si';
 import { areaColors, colors } from '@/constants/dyscalculia/theme';
 import { useDyscalculia } from '@/contexts/dyscalculia/DyscalculiaContext';
-import type { RiskLevel, SkillArea } from '@/types/dyscalculia';
+import { AREA_GROUP, type DyscalculiaGroup, type RiskLevel, type SkillArea } from '@/types/dyscalculia';
+
+const GROUP_AREA = Object.fromEntries(Object.entries(AREA_GROUP).map(([a, g]) => [g, a])) as Record<DyscalculiaGroup, SkillArea>;
 
 // Demo PIN until the shared auth flow provides teacher accounts.
 const TEACHER_PIN = '1234';
@@ -106,7 +108,14 @@ export default function TeacherReport() {
                   {si.teacher.wrongPin}
                 </Txt>
               ) : null}
-              <Btn3D label={si.teacher.open} icon="lock-open" color={colors.blue} dark={colors.blueDark} onPress={() => tryPin()} style={{ alignSelf: 'stretch' }} />
+              <Btn3D
+                label={si.teacher.open}
+                icon="lock-open"
+                color={colors.blue}
+                dark={colors.blueDark}
+                onPress={() => tryPin()}
+                style={{ alignSelf: 'stretch' }}
+              />
               <Txt size={16} weight="semi" color={colors.muted} style={{ marginTop: s(6) }}>
                 {si.teacher.pinHint}
               </Txt>
@@ -120,7 +129,7 @@ export default function TeacherReport() {
   return (
     <Screen scene="garden" layout="full" title={`${si.teacher.title}${childName ? ` • ${childName}` : ''}`}>
       <ScrollView contentContainerStyle={{ paddingBottom: s(10) }}>
-        {!screening ? (
+        {!screening && !profile ? (
           <PaperCard style={{ alignItems: 'center' }}>
             <Txt size={24} weight="bold" color={colors.navy}>
               {si.teacher.noResults}
@@ -129,65 +138,118 @@ export default function TeacherReport() {
         ) : (
           <View style={{ flexDirection: 'row', gap: s(20) }}>
             <Section title={si.teacher.stage1}>
-              <View style={{ alignSelf: 'flex-start', backgroundColor: RISK_STYLE[screening.riskLevel].bg, borderRadius: s(20), paddingHorizontal: s(14) }}>
-                <Txt size={19} weight="black" color={RISK_STYLE[screening.riskLevel].fg}>
-                  {si.teacher.risk[screening.riskLevel]}
+              {!screening ? (
+                <Txt size={17} weight="semi" color={colors.muted}>
+                  {si.teacher.noResults}
                 </Txt>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(10), marginTop: s(10) }}>
-                <Txt size={17} weight="semi" color={colors.navy}>
-                  {si.teacher.riskScore}
-                </Txt>
-                <Bar value={screening.riskScore} color={RISK_STYLE[screening.riskLevel].fg} soft={colors.sky} />
-                <Txt size={17} weight="black" color={colors.navy}>
-                  {Math.round(screening.riskScore * 100)}%
-                </Txt>
-              </View>
-              {screening.reasons.length ? (
-                <View style={{ marginTop: s(8) }}>
-                  <Txt size={17} weight="bold" color={colors.navy}>
-                    {si.teacher.reasons}:
-                  </Txt>
-                  {screening.reasons.map((r) => (
-                    <Txt key={r} size={16} weight="regular" color={colors.muted}>
-                      • {r}
+              ) : (
+                <>
+                  <View
+                    style={{
+                      alignSelf: 'flex-start',
+                      backgroundColor: RISK_STYLE[screening.riskLevel].bg,
+                      borderRadius: s(20),
+                      paddingHorizontal: s(14),
+                    }}
+                  >
+                    <Txt size={19} weight="black" color={RISK_STYLE[screening.riskLevel].fg}>
+                      {si.teacher.risk[screening.riskLevel]}
                     </Txt>
-                  ))}
-                </View>
-              ) : null}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8), marginTop: s(10), backgroundColor: colors.sky, borderRadius: s(14), padding: s(10) }}>
-                <Ionicons name="arrow-forward-circle" size={s(26)} color={colors.blue} />
-                <Txt size={17} weight="bold" color={colors.header} style={{ flex: 1 }}>
-                  {si.teacher.recommendation[screening.recommendation]}
-                </Txt>
-              </View>
-              {screening.source === 'demo' ? (
-                <Txt size={14} weight="regular" color={colors.muted} style={{ marginTop: s(6) }}>
-                  {si.teacher.demoNote}
-                </Txt>
-              ) : null}
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(10), marginTop: s(10) }}>
+                    <Txt size={17} weight="semi" color={colors.navy}>
+                      {si.teacher.riskScore}
+                    </Txt>
+                    <Bar value={screening.riskScore} color={RISK_STYLE[screening.riskLevel].fg} soft={colors.sky} />
+                    <Txt size={17} weight="black" color={colors.navy}>
+                      {Math.round(screening.riskScore * 100)}%
+                    </Txt>
+                  </View>
+                  {screening.reasons.length ? (
+                    <View style={{ marginTop: s(8) }}>
+                      <Txt size={17} weight="bold" color={colors.navy}>
+                        {si.teacher.reasons}:
+                      </Txt>
+                      {screening.reasons.map((r) => (
+                        <Txt key={r} size={16} weight="regular" color={colors.muted}>
+                          • {r}
+                        </Txt>
+                      ))}
+                    </View>
+                  ) : null}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: s(8),
+                      marginTop: s(10),
+                      backgroundColor: colors.sky,
+                      borderRadius: s(14),
+                      padding: s(10),
+                    }}
+                  >
+                    <Ionicons name="arrow-forward-circle" size={s(26)} color={colors.blue} />
+                    <Txt size={17} weight="bold" color={colors.header} style={{ flex: 1 }}>
+                      {si.teacher.recommendation[screening.recommendation]}
+                    </Txt>
+                  </View>
+                  {screening.source === 'demo' ? (
+                    <Txt size={14} weight="regular" color={colors.muted} style={{ marginTop: s(6) }}>
+                      {si.teacher.demoNote}
+                    </Txt>
+                  ) : null}
+                </>
+              )}
             </Section>
 
             <Section title={si.teacher.stage2}>
               {profile ? (
-                profile.map((a) => (
-                  <View key={a.area} style={{ marginBottom: s(10) }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Txt size={18} weight="bold" color={areaColors[a.area].main}>
-                        {si.areas[a.area]}
+                <>
+                  {/* the profile: group name(s) with a plain explanation */}
+                  {profile.profile.map((p) => (
+                    <View
+                      key={p.group}
+                      style={{
+                        marginBottom: s(8),
+                        padding: s(10),
+                        borderRadius: s(14),
+                        backgroundColor: p.group === 'unclassified' ? colors.sky : colors.amberSoft,
+                      }}
+                    >
+                      <Txt size={18} weight="black" color={p.group === 'unclassified' ? colors.header : colors.amberDark}>
+                        {p.name}
                       </Txt>
-                      <Txt size={16} weight="bold" color={a.needsSupport ? colors.red : colors.green}>
-                        {a.needsSupport ? si.teacher.needsSupport : si.teacher.strength}
+                      <Txt size={15} weight="semi" color={colors.navy}>
+                        {p.explanation}
                       </Txt>
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
-                      <Bar value={a.accuracy} color={areaColors[a.area].main} soft={areaColors[a.area].soft} />
-                      <Txt size={16} weight="semi" color={colors.navy}>
-                        {a.correct}/{a.total}
-                      </Txt>
-                    </View>
-                  </View>
-                ))
+                  ))}
+                  {/* each group's score */}
+                  {profile.groups.map((g) => {
+                    const c = areaColors[GROUP_AREA[g.group]];
+                    return (
+                      <View key={g.group} style={{ marginBottom: s(8) }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Txt size={16} weight="bold" color={c.main}>
+                            {g.name}
+                          </Txt>
+                          <Txt size={15} weight="bold" color={g.needsSupport ? colors.red : colors.green}>
+                            {g.reason === 'speed' ? si.teacher.slowArea : g.needsSupport ? si.teacher.needsSupport : si.teacher.strength}
+                          </Txt>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
+                          <Bar value={g.accuracy ?? 0} color={c.main} soft={c.soft} />
+                          <Txt size={15} weight="semi" color={colors.navy}>
+                            {g.correct}/{g.total}
+                          </Txt>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  <Txt size={13} weight="regular" color={colors.muted}>
+                    {si.teacher.profileNote}
+                  </Txt>
+                </>
               ) : (
                 <Txt size={17} weight="semi" color={colors.muted}>
                   {si.teacher.noResults}
