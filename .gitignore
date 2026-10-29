@@ -47,4 +47,4 @@ yarn-error.*
 android/
 ios/
 
-Backend/app/ml_models/DL/*.keras
+*.keras
