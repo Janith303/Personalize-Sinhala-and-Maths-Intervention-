@@ -1,42 +1,57 @@
-// Colours and fonts for the dyscalculia module (blue and white theme with bright accents for games).
+// Colours of the dyscalculia module, taken from the design mockups (blue header, cream cards,
+// bright game buttons). Fonts come from the shared team theme (constants/common/theme.ts).
 
 export const colors = {
-  primary: '#185FA5',
-  primaryLight: '#378ADD',
-  primarySoft: '#85B7EB',
-  sky: '#E6F1FB',
-  page: '#F4F9FF',
-  border: '#B5D4F4',
-  navy: '#0C447C',
-  ink: '#042C53',
+  header: '#1B5EA8', // same as the team's blue theme header
+  headerDark: '#124A87',
+  navy: '#123A6B',
+  blue: '#2E79D3',
+  blueDark: '#1D5BA8',
+  sky: '#EAF4FD',
+  skyBorder: '#9CCFF4',
+  skyDash: '#B9DCF7',
+  cream: '#FFFBF0',
+  creamPill: '#FFF3C4',
+  creamBorder: '#F3D27A',
+  highlight: '#FFE89A',
+  highlightBlue: '#CFE6FA',
   white: '#FFFFFF',
-  green: '#1D9E75',
+  green: '#22A045',
+  greenDark: '#17803A',
   greenSoft: '#E1F5EE',
-  red: '#E24B4A',
+  greenBorder: '#9EDCB5',
+  red: '#E5383B',
+  redDark: '#B82528',
   redSoft: '#FCEBEB',
-  amber: '#EF9F27',
+  amber: '#F5A524',
+  amberDark: '#C47F0B',
   amberSoft: '#FAEEDA',
-  purple: '#7F77DD',
+  purple: '#8B5CF6',
+  purpleDark: '#6D28D9',
   purpleSoft: '#EEEDFE',
-  pink: '#D4537E',
-  coral: '#D85A30',
-  coralSoft: '#FAECE7',
+  pink: '#E0457B',
+  pinkDark: '#B02A5B',
+  orange: '#F26B1D',
+  orangeDark: '#C44F0E',
+  orangeSoft: '#FDEBDD',
+  backArrow: '#2E9E43',
   muted: '#5F7A99',
+  lockCard: '#FFF6E0',
+  lockBorder: '#F2C24E',
+  lockText: '#5A3A10',
 };
 
-/** Bright colours for multiple-choice answer buttons (cycled). */
-export const optionColors = [colors.amber, colors.purple, colors.pink, colors.green];
+/** Bright colours for multiple-choice answer buttons (cycled): [face, darker bottom edge]. */
+export const optionColors: [string, string][] = [
+  [colors.amber, colors.amberDark],
+  [colors.purple, colors.purpleDark],
+  [colors.pink, colors.pinkDark],
+  [colors.green, colors.greenDark],
+];
 
-/** One colour per skill area (Stage 2 profile and intervention). */
+/** One colour set per skill area (Stage 2 profile and practice map). */
 export const areaColors = {
-  quantity: { main: colors.primaryLight, soft: colors.sky },
-  sequence: { main: colors.purple, soft: colors.purpleSoft },
-  operations: { main: colors.coral, soft: colors.coralSoft },
+  quantity: { main: colors.blue, dark: colors.blueDark, soft: '#E3F0FC' },
+  sequence: { main: colors.purple, dark: colors.purpleDark, soft: colors.purpleSoft },
+  operations: { main: colors.orange, dark: colors.orangeDark, soft: colors.orangeSoft },
 } as const;
-
-/** Font family names registered in app/dyscalculia/_layout.tsx. */
-export const fonts = {
-  regular: 'NotoSansSinhala_400Regular',
-  medium: 'NotoSansSinhala_500Medium',
-  bold: 'NotoSansSinhala_700Bold',
-};

@@ -1,21 +1,69 @@
-// Pictures shown in the games: dots, shapes, faces, memory grid, number train and equations.
-// Drawn with plain Views so no extra drawing library is needed.
+// Pictures shown in the games: equations, dots, shapes, faces, memory grid and number train.
+// Drawn with plain Views; sizes are design pixels scaled with useU().
 import { useMemo } from 'react';
-import { View } from 'react-native';
-import { colors } from '../../constants/dyscalculia/theme';
-import type { FaceSpec, QuestionVisual, ShapeName } from '../../types/dyscalculia';
-import { MEMORY_GRID } from '../../utils/dyscalculia/screeningTrials';
-import { shuffle } from '../../utils/dyscalculia/random';
+import { Text, View, type TextStyle } from 'react-native';
+
+import { useU } from '@/components/common/layout';
+import { colors } from '@/constants/dyscalculia/theme';
+import type { FaceSpec, QuestionVisual, ShapeName } from '@/types/dyscalculia';
+import { shuffle } from '@/utils/dyscalculia/random';
+import { MEMORY_GRID } from '@/utils/dyscalculia/screeningTrials';
 import { Icon } from './Icon';
-import { NumText } from './ui';
+
+/** Big bold number / symbol text. */
+function Num({ size, color = colors.navy, style, children }: { size: number; color?: string; style?: TextStyle; children: React.ReactNode }) {
+  const { s } = useU();
+  return <Text style={[{ fontSize: s(size), lineHeight: s(size * 1.18), fontWeight: '900', color }, style]}>{children}</Text>;
+}
+
+/** Light-blue rounded box (numbers and equations). */
+export function NumberBox({ children, width, height }: { children: React.ReactNode; width?: number; height: number }) {
+  const { s } = useU();
+  return (
+    <View
+      style={{
+        width: width ? s(width) : undefined,
+        height: s(height),
+        paddingHorizontal: width ? 0 : s(46),
+        borderRadius: s(26),
+        backgroundColor: colors.sky,
+        borderWidth: s(4),
+        borderColor: '#5AA6EE',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: s(18),
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/** "4 + 1 = 5": numbers navy, operators blue, the shown answer purple. */
+export function Equation({ parts, size = 92 }: { parts: (string | number)[]; size?: number }) {
+  return (
+    <NumberBox height={size * 1.55}>
+      {parts.map((p, i) => {
+        const op = typeof p === 'string' && /^[+−×÷=?]$/.test(p) && p !== '?';
+        const last = i === parts.length - 1;
+        return (
+          <Num key={i} size={size} color={op ? '#2E8BEF' : last ? colors.purple : colors.navy}>
+            {p}
+          </Num>
+        );
+      })}
+    </NumberBox>
+  );
+}
 
 /** `count` dots scattered over a grid of slots (no overlaps). `seed` re-shuffles positions per question. */
 export function DotField({
   count,
-  width = 220,
-  height = 150,
-  dot = 22,
-  color = colors.primaryLight,
+  width = 300,
+  height = 170,
+  dot = 46,
+  color = colors.amber,
   seed = 0,
 }: {
   count: number;
@@ -25,56 +73,67 @@ export function DotField({
   color?: string;
   seed?: number;
 }) {
+  const { s } = useU();
   const positions = useMemo(() => {
-    const cols = 5;
-    const rows = Math.max(4, Math.ceil(count / cols));
+    const cols = count <= 6 ? 3 : 5;
+    const rows = Math.max(2, Math.ceil(count / cols));
     const cw = width / cols;
     const ch = height / rows;
     const slots = shuffle(Array.from({ length: cols * rows }, (_, i) => i)).slice(0, count);
-    return slots.map((s) => ({
-      left: (s % cols) * cw + (cw - dot) / 2 + (Math.random() - 0.5) * (cw - dot) * 0.6,
-      top: Math.floor(s / cols) * ch + (ch - dot) / 2 + (Math.random() - 0.5) * (ch - dot) * 0.6,
+    const d = Math.min(dot, cw * 0.8, ch * 0.8);
+    return slots.map((sl) => ({
+      d,
+      left: (sl % cols) * cw + (cw - d) / 2 + (Math.random() - 0.5) * (cw - d) * 0.5,
+      top: Math.floor(sl / cols) * ch + (ch - d) / 2 + (Math.random() - 0.5) * (ch - d) * 0.5,
     }));
-    // seed is only used to force new positions for a new question
+    // seed only forces new positions for a new question
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count, width, height, dot, seed]);
   return (
-    <View style={{ width, height }}>
+    <View style={{ width: s(width), height: s(height) }}>
       {positions.map((p, i) => (
         <View
           key={i}
-          style={{ position: 'absolute', left: p.left, top: p.top, width: dot, height: dot, borderRadius: dot / 2, backgroundColor: color }}
+          style={{ position: 'absolute', left: s(p.left), top: s(p.top), width: s(p.d), height: s(p.d), borderRadius: s(p.d), backgroundColor: color }}
         />
       ))}
     </View>
   );
 }
 
-export function Shape({ name, size = 96, color = colors.purple }: { name: ShapeName; size?: number; color?: string }) {
+/** Cream box with an orange border holding dots. */
+export function DotBox({ count, seed, width = 330, height = 190, color = colors.amber, border = colors.amber }: { count: number; seed: number; width?: number; height?: number; color?: string; border?: string }) {
+  const { s } = useU();
+  return (
+    <View style={{ padding: s(14), borderRadius: s(26), backgroundColor: '#FFF8EA', borderWidth: s(4), borderColor: border }}>
+      <DotField count={count} seed={seed} width={width} height={height} color={color} />
+    </View>
+  );
+}
+
+export function Shape({ name, size = 120, color = colors.purple }: { name: ShapeName; size?: number; color?: string }) {
+  const { s } = useU();
+  const z = s(size);
   switch (name) {
     case 'circle':
-      return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }} />;
+      return <View style={{ width: z, height: z, borderRadius: z / 2, backgroundColor: color }} />;
     case 'square':
-      return <View style={{ width: size * 0.9, height: size * 0.9, borderRadius: 6, backgroundColor: color }} />;
+      return <View style={{ width: z * 0.9, height: z * 0.9, borderRadius: s(8), backgroundColor: color }} />;
     case 'rectangle':
-      return <View style={{ width: size * 1.4, height: size * 0.65, borderRadius: 6, backgroundColor: color }} />;
+      return <View style={{ width: z * 1.4, height: z * 0.65, borderRadius: s(8), backgroundColor: color }} />;
     case 'oval':
-      return <View style={{ width: size * 1.4, height: size * 0.8, borderRadius: size, backgroundColor: color }} />;
+      return <View style={{ width: z * 1.4, height: z * 0.8, borderRadius: z, backgroundColor: color }} />;
     case 'diamond':
-      return (
-        <View
-          style={{ width: size * 0.72, height: size * 0.72, borderRadius: 6, backgroundColor: color, transform: [{ rotate: '45deg' }] }}
-        />
-      );
+      return <View style={{ width: z * 0.72, height: z * 0.72, borderRadius: s(8), backgroundColor: color, transform: [{ rotate: '45deg' }] }} />;
     case 'triangle':
       return (
         <View
           style={{
             width: 0,
             height: 0,
-            borderLeftWidth: size / 2,
-            borderRightWidth: size / 2,
-            borderBottomWidth: size * 0.86,
+            borderLeftWidth: z / 2,
+            borderRightWidth: z / 2,
+            borderBottomWidth: z * 0.86,
             borderLeftColor: 'transparent',
             borderRightColor: 'transparent',
             borderBottomColor: color,
@@ -86,154 +145,162 @@ export function Shape({ name, size = 96, color = colors.purple }: { name: ShapeN
 
 const SKIN = ['#F2C9A0', '#D9A06B', '#8D5A3B'];
 const HAIR = '#3B2A1E';
+const LIPS = '#A3333D';
 
-export function Face({ spec, size = 120 }: { spec: FaceSpec; size?: number }) {
-  const eyeY = size * 0.38;
+export function Face({ spec, size = 150 }: { spec: FaceSpec; size?: number }) {
+  const { s } = useU();
+  const z = s(size);
+  const eyeY = z * 0.38;
   const eye = (left: number) => {
     const base = { position: 'absolute' as const, top: eyeY, left };
-    if (spec.eyes === 2) return <View style={{ ...base, width: size * 0.14, height: 4, borderRadius: 2, backgroundColor: HAIR }} />;
+    if (spec.eyes === 2) return <View style={{ ...base, width: z * 0.14, height: Math.max(3, z * 0.03), borderRadius: 2, backgroundColor: HAIR }} />;
     if (spec.eyes === 1)
       return (
         <View
-          style={{
-            ...base,
-            top: eyeY - size * 0.05,
-            width: size * 0.15,
-            height: size * 0.12,
-            borderRadius: size,
-            backgroundColor: colors.white,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={{ ...base, top: eyeY - z * 0.05, width: z * 0.15, height: z * 0.12, borderRadius: z, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' }}
         >
-          <View style={{ width: size * 0.06, height: size * 0.06, borderRadius: size, backgroundColor: HAIR }} />
+          <View style={{ width: z * 0.06, height: z * 0.06, borderRadius: z, backgroundColor: HAIR }} />
         </View>
       );
-    return <View style={{ ...base, top: eyeY - size * 0.03, width: size * 0.09, height: size * 0.09, borderRadius: size, backgroundColor: HAIR }} />;
+    return <View style={{ ...base, top: eyeY - z * 0.03, width: z * 0.09, height: z * 0.09, borderRadius: z, backgroundColor: HAIR }} />;
   };
-  const mouthTop = size * 0.62;
-  let mouth;
-  if (spec.mouth === 0)
-    mouth = (
+  const mouthTop = z * 0.62;
+  const mouth =
+    spec.mouth === 0 ? (
       <View
         style={{
           position: 'absolute',
-          top: mouthTop - size * 0.08,
-          left: size * 0.32,
-          width: size * 0.36,
-          height: size * 0.18,
-          borderBottomWidth: 4,
-          borderBottomLeftRadius: size,
-          borderBottomRightRadius: size,
-          borderColor: '#A3333D',
+          top: mouthTop - z * 0.08,
+          left: z * 0.32,
+          width: z * 0.36,
+          height: z * 0.18,
+          borderBottomWidth: Math.max(3, z * 0.03),
+          borderBottomLeftRadius: z,
+          borderBottomRightRadius: z,
+          borderColor: LIPS,
         }}
       />
+    ) : spec.mouth === 1 ? (
+      <View style={{ position: 'absolute', top: mouthTop + 4, left: z * 0.34, width: z * 0.32, height: Math.max(3, z * 0.03), borderRadius: 2, backgroundColor: LIPS }} />
+    ) : (
+      <View style={{ position: 'absolute', top: mouthTop - 2, left: z * 0.41, width: z * 0.18, height: z * 0.16, borderRadius: z, backgroundColor: LIPS }} />
     );
-  else if (spec.mouth === 1)
-    mouth = <View style={{ position: 'absolute', top: mouthTop + 4, left: size * 0.34, width: size * 0.32, height: 4, borderRadius: 2, backgroundColor: '#A3333D' }} />;
-  else
-    mouth = <View style={{ position: 'absolute', top: mouthTop - 2, left: size * 0.41, width: size * 0.18, height: size * 0.16, borderRadius: size, backgroundColor: '#A3333D' }} />;
-
   return (
-    <View style={{ width: size, height: size }}>
-      <View style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: SKIN[spec.skin] }} />
+    <View style={{ width: z, height: z }}>
+      <View style={{ position: 'absolute', width: z, height: z, borderRadius: z / 2, backgroundColor: SKIN[spec.skin] }} />
       {spec.hair === 1 ? (
         <View
-          style={{ position: 'absolute', top: -2, left: size * 0.12, width: size * 0.76, height: size * 0.26, borderTopLeftRadius: size, borderTopRightRadius: size, backgroundColor: HAIR }}
+          style={{ position: 'absolute', top: -2, left: z * 0.12, width: z * 0.76, height: z * 0.26, borderTopLeftRadius: z, borderTopRightRadius: z, backgroundColor: HAIR }}
         />
       ) : null}
       {spec.hair === 2 ? (
         <>
-          <View style={{ position: 'absolute', top: size * 0.12, left: -4, width: size * 0.2, height: size * 0.45, borderRadius: size, backgroundColor: HAIR }} />
-          <View style={{ position: 'absolute', top: size * 0.12, right: -4, width: size * 0.2, height: size * 0.45, borderRadius: size, backgroundColor: HAIR }} />
+          <View style={{ position: 'absolute', top: z * 0.12, left: -4, width: z * 0.2, height: z * 0.45, borderRadius: z, backgroundColor: HAIR }} />
+          <View style={{ position: 'absolute', top: z * 0.12, right: -4, width: z * 0.2, height: z * 0.45, borderRadius: z, backgroundColor: HAIR }} />
         </>
       ) : null}
-      {eye(size * 0.26)}
-      {eye(size * 0.6)}
+      {eye(z * 0.26)}
+      {eye(z * 0.6)}
       {mouth}
     </View>
   );
 }
 
-/** 4 x 4 grid. Shows stars in `stars` cells, or highlights the `probe` cell. */
-export function MemoryGrid({ stars = [], probe, cell = 46 }: { stars?: number[]; probe?: number; cell?: number }) {
+/** White rounded box holding a shape or face. */
+export function PictureBox({ children }: { children: React.ReactNode }) {
+  const { s } = useU();
   return (
-    <View style={{ width: cell * MEMORY_GRID + 8 * MEMORY_GRID, flexDirection: 'row', flexWrap: 'wrap' }}>
+    <View
+      style={{
+        width: s(240),
+        height: s(200),
+        borderRadius: s(26),
+        backgroundColor: colors.white,
+        borderWidth: s(4),
+        borderColor: colors.skyBorder,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/** 4 x 4 grid. Shows stars in `stars` cells, or highlights the `probe` cell. */
+export function MemoryGrid({ stars = [], probe, cell = 52 }: { stars?: number[]; probe?: number; cell?: number }) {
+  const { s } = useU();
+  const c = s(cell);
+  return (
+    <View style={{ width: (c + s(10)) * MEMORY_GRID, flexDirection: 'row', flexWrap: 'wrap' }}>
       {Array.from({ length: MEMORY_GRID * MEMORY_GRID }, (_, i) => (
         <View
           key={i}
           style={{
-            width: cell,
-            height: cell,
-            margin: 4,
-            borderRadius: 10,
+            width: c,
+            height: c,
+            margin: s(5),
+            borderRadius: s(12),
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: i === probe ? colors.amberSoft : colors.white,
-            borderWidth: i === probe ? 4 : 2,
-            borderColor: i === probe ? colors.amber : colors.border,
+            borderWidth: s(i === probe ? 5 : 3),
+            borderColor: i === probe ? colors.amber : colors.skyDash,
           }}
         >
-          {stars.includes(i) ? <Icon name="star" size={cell * 0.7} /> : null}
+          {stars.includes(i) ? <Icon name="star" size={c * 0.72} /> : null}
         </View>
       ))}
     </View>
   );
 }
 
-export function NumberTrain({ items, car = 58 }: { items: (number | null)[]; car?: number }) {
+export function NumberTrain({ items, car = 84 }: { items: (number | null)[]; car?: number }) {
+  const { s } = useU();
   return (
-    <View className="flex-row items-end">
-      <Icon name="train" size={car * 1.25} style={{ marginRight: 2 }} />
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+      <Icon name="train" size={s(car * 1.35)} style={{ marginRight: s(4) }} />
       {items.map((n, i) => (
         <View
           key={i}
-          className="mx-1 items-center justify-center rounded-lg"
           style={{
-            width: car,
-            height: car * 0.86,
-            backgroundColor: n == null ? colors.white : colors.primaryLight,
-            borderWidth: n == null ? 3 : 0,
+            width: s(car),
+            height: s(car * 0.9),
+            marginHorizontal: s(5),
+            borderRadius: s(14),
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: n == null ? colors.white : [colors.green, colors.blue, colors.pink, colors.amber, colors.purple][i % 5],
+            borderWidth: n == null ? s(4) : 0,
             borderStyle: n == null ? 'dashed' : 'solid',
-            borderColor: colors.primaryLight,
+            borderColor: colors.navy,
           }}
         >
-          <NumText style={{ fontSize: car * 0.46, color: n == null ? colors.primaryLight : colors.white }}>{n ?? '?'}</NumText>
+          <Num size={car * 0.5} color={n == null ? colors.navy : colors.white}>
+            {n ?? '?'}
+          </Num>
         </View>
       ))}
     </View>
   );
 }
 
-export function EquationCard({ text, size = 46 }: { text: string; size?: number }) {
-  return (
-    <View className="rounded-3xl bg-white px-10 py-3" style={{ borderWidth: 3, borderColor: colors.primaryLight }}>
-      <NumText style={{ fontSize: size, letterSpacing: 2 }}>{text}</NumText>
-    </View>
-  );
-}
-
+/** Visual for a Stage 2 / practice question. */
 export function QuestionVisualView({ visual, seed }: { visual: QuestionVisual; seed: number }) {
+  const { s } = useU();
   switch (visual.type) {
     case 'dots':
-      return (
-        <View className="rounded-3xl bg-white p-3" style={{ borderWidth: 3, borderColor: colors.primaryLight }}>
-          <DotField count={visual.count} seed={seed} width={260} height={visual.count > 10 ? 150 : 120} />
-        </View>
-      );
+      return <DotBox count={visual.count} seed={seed} width={visual.count > 10 ? 420 : 340} height={visual.count > 10 ? 190 : 160} color={colors.blue} border="#5AA6EE" />;
     case 'compareDots':
       return (
-        <View className="flex-row">
-          {[visual.left, visual.right].map((c, i) => (
-            <View key={i} className="mx-3 rounded-3xl bg-white p-3" style={{ borderWidth: 3, borderColor: i ? colors.pink : colors.amber }}>
-              <DotField count={c} seed={seed + i} width={190} height={130} dot={18} color={i ? colors.pink : colors.amber} />
-            </View>
-          ))}
+        <View style={{ flexDirection: 'row', gap: s(26) }}>
+          <DotBox count={visual.left} seed={seed} width={250} height={170} color={colors.amber} border={colors.amber} />
+          <DotBox count={visual.right} seed={seed + 1} width={250} height={170} color={colors.pink} border={colors.pink} />
         </View>
       );
     case 'train':
       return <NumberTrain items={visual.items} />;
     case 'equation':
-      return <EquationCard text={visual.text} />;
+      return <Equation parts={visual.text.split(/\s+/).filter(Boolean)} size={80} />;
   }
 }

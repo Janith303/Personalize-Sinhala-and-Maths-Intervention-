@@ -30,7 +30,7 @@ export const si = {
     title: 'ගණිත වික්‍රමය',
     hello: 'ආයුබෝවන්!',
     helloName: (name: string) => `ආයුබෝවන්, ${name}!`,
-    subtitle: 'අද අපි ගණිත ක්‍රීඩා කරමු',
+    subtitle: 'අද අපි ගණිතය ඉගෙන ගනිමු!',
     stage1Title: 'ගණිත ක්‍රීඩා',
     stage1Sub: 'පටන් ගමු',
     stage1Done: 'අවසන් කළා',
@@ -50,7 +50,8 @@ export const si = {
     nameRequired: 'කරුණාකර ඔබේ නම ඇතුළත් කරන්න',
     explain: 'කෙටි ක්‍රීඩා 7ක් තිබෙනවා. හොඳින් බලා, ඉක්මනින් පිළිතුරු දෙන්න!',
     tip: 'වැරදුණත් කමක් නැහැ. ඔබට හැකි හොඳම දේ කරන්න.',
-    gameOf: (i: number, n: number) => `ක්‍රීඩාව ${i} / ${n}`,
+    nameHelp: 'හොඳයි! ඔබේ නම ලියන්න.\nඉන්පසු "පටන් ගමු" බොත්තම ඔබන්න!\nඑවිට අපි එකට ගණිතය ඉගෙන ගනිමු!',
+    gameOf: (i: number, n: number) => `ක්‍රියාව ${i} / ${n}`,
     ask: {
       verify: 'මෙම පිළිතුර හරිද?',
       numberMatch: 'අංකය සහ තිත් ගණන සමානද?',
@@ -59,8 +60,9 @@ export const si = {
       memoryWatch: 'තරු ඇති කොටු මතක තබා ගන්න!',
       memoryAsk: 'මෙම කොටුවේ තරුවක් තිබුණාද?',
     },
-    doneTitle: 'නියමයි! ඔබ සියලු ක්‍රීඩා අවසන් කළා!',
-    doneSub: 'ඔබට තරු ලැබුණා',
+    doneTitleA: 'නියමයි!',
+    doneTitleB: 'ඔබ සියලු ක්‍රීඩා අවසන් කළා!',
+    doneSub: 'ඔබට තරු ලැබුණා:',
     forTeacher: 'ගුරුවරයාට ප්‍රතිඵල',
     calculating: 'ප්‍රතිඵල සකසමින්...',
   },
@@ -127,6 +129,11 @@ export const si = {
   // Intervention (practice)
   practice: {
     title: 'මගේ ගණිත ගමන',
+    areaSub: {
+      quantity: 'අංක හඳුනාගෙන ගණන් කරමු',
+      sequence: 'අංකවල රටාව හඳුනා ගනිමු',
+      operations: 'එකතු කිරීම හා අඩු කිරීම',
+    } satisfies Record<SkillArea, string>,
     level: (n: number) => `මට්ටම ${n}`,
     recommended: 'ඔබට නිර්දේශිතයි',
     sessionDone: 'පුහුණුව අවසන්!',
