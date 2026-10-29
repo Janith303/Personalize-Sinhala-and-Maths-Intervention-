@@ -1,17 +1,18 @@
 // Stage 1: runs the 7 screening games. Each trial is a timed yes/no decision; accuracy and
-// reaction times are sent for scoring at the end. No right/wrong feedback during the games.
+// reaction times are sent for scoring at the end. No right/wrong feedback and no hints during the games.
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { MathBackground } from '../../../components/dyscalculia/MathBackground';
-import { DotField, Face, MemoryGrid, Shape } from '../../../components/dyscalculia/Stimuli';
-import { BigButton, Card, Mascot, NumText, ProgressDots, SiText, TopBar } from '../../../components/dyscalculia/ui';
-import { si } from '../../../constants/dyscalculia/strings.si';
-import { colors } from '../../../constants/dyscalculia/theme';
-import { useDyscalculia } from '../../../contexts/dyscalculia/DyscalculiaContext';
-import { scoreScreening } from '../../../services/dyscalculia/api';
-import type { TrialResult, TrialSpec } from '../../../types/dyscalculia';
-import { buildTrials, DEADLINE_MS, TASK_ORDER } from '../../../utils/dyscalculia/screeningTrials';
+
+import { Txt, useU } from '@/components/common/layout';
+import { Btn3D, DotsPill, Highlight, InfoBox, PaperCard, Screen, StarPill } from '@/components/dyscalculia/kit';
+import { DotBox, Equation, Face, MemoryGrid, NumberBox, PictureBox, Shape } from '@/components/dyscalculia/Stimuli';
+import { si } from '@/constants/dyscalculia/strings.si';
+import { colors } from '@/constants/dyscalculia/theme';
+import { useDyscalculia } from '@/contexts/dyscalculia/DyscalculiaContext';
+import { scoreScreening } from '@/services/dyscalculia/api';
+import type { TrialResult, TrialSpec } from '@/types/dyscalculia';
+import { buildTrials, DEADLINE_MS, TASK_ORDER } from '@/utils/dyscalculia/screeningTrials';
 
 type Phase = 'instruction' | 'gap' | 'memoryShow' | 'stimulus' | 'calculating';
 
@@ -19,53 +20,49 @@ const GAP_MS = 400;
 const MEMORY_SHOW_MS = 1800;
 
 function Stimulus({ trial, showStars }: { trial: TrialSpec; showStars?: boolean }) {
+  const { s } = useU();
   switch (trial.kind) {
     case 'verify':
-      return (
-        <View className="rounded-3xl bg-white px-12 py-3" style={{ borderWidth: 3, borderColor: colors.primaryLight }}>
-          <NumText style={{ fontSize: 54, letterSpacing: 3 }}>
-            {trial.a} + {trial.b} = {trial.shown}
-          </NumText>
-        </View>
-      );
+      return <Equation parts={[trial.a, '+', trial.b, '=', trial.shown]} />;
     case 'numberMatch':
       return (
-        <View className="flex-row items-center">
-          <View className="mr-6 h-32 w-32 items-center justify-center rounded-3xl bg-white" style={{ borderWidth: 3, borderColor: colors.primaryLight }}>
-            <NumText style={{ fontSize: 70 }}>{trial.digit}</NumText>
-          </View>
-          <View className="rounded-3xl bg-white p-3" style={{ borderWidth: 3, borderColor: colors.amber }}>
-            <DotField count={trial.dots} width={200} height={110} dot={22} color={colors.amber} seed={trial.digit * 31 + trial.dots} />
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(30) }}>
+          <NumberBox width={230} height={210}>
+            <Text style={{ fontSize: s(140), lineHeight: s(160), fontWeight: '900', color: colors.navy }}>{trial.digit}</Text>
+          </NumberBox>
+          <DotBox count={trial.dots} seed={trial.digit * 31 + trial.dots} />
         </View>
       );
     case 'shapeMatch':
       return (
-        <View className="flex-row items-center">
-          {[trial.left, trial.right].map((s, i) => (
-            <View key={i} className="mx-4 h-36 w-44 items-center justify-center rounded-3xl bg-white" style={{ borderWidth: 3, borderColor: colors.border }}>
-              <Shape name={s} />
-            </View>
-          ))}
+        <View style={{ flexDirection: 'row', gap: s(30) }}>
+          <PictureBox>
+            <Shape name={trial.left} />
+          </PictureBox>
+          <PictureBox>
+            <Shape name={trial.right} />
+          </PictureBox>
         </View>
       );
     case 'faceMatch':
       return (
-        <View className="flex-row items-center">
-          {[trial.left, trial.right].map((f, i) => (
-            <View key={i} className="mx-4 h-36 w-40 items-center justify-center rounded-3xl bg-white" style={{ borderWidth: 3, borderColor: colors.border }}>
-              <Face spec={f} size={112} />
-            </View>
-          ))}
+        <View style={{ flexDirection: 'row', gap: s(30) }}>
+          <PictureBox>
+            <Face spec={trial.left} />
+          </PictureBox>
+          <PictureBox>
+            <Face spec={trial.right} />
+          </PictureBox>
         </View>
       );
     case 'memory':
-      return showStars ? <MemoryGrid stars={trial.cells} cell={36} /> : <MemoryGrid probe={trial.probe} cell={36} />;
+      return showStars ? <MemoryGrid stars={trial.cells} cell={46} /> : <MemoryGrid probe={trial.probe} cell={46} />;
   }
 }
 
 export default function ScreeningPlay() {
-  const { childName, saveScreening, addStars } = useDyscalculia();
+  const { s } = useU();
+  const { childName, stars, saveScreening, addStars } = useDyscalculia();
   const [block, setBlock] = useState(0);
   const [trialIdx, setTrialIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('instruction');
@@ -128,48 +125,50 @@ export default function ScreeningPlay() {
     }
   }
 
-  const title = `${si.screening.gameOf(block + 1, TASK_ORDER.length)} · ${info.title}`;
+  const title = `${si.screening.gameOf(block + 1, TASK_ORDER.length)} • ${info.title}`;
 
   if (phase === 'calculating') {
     return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.page }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <SiText weight="medium" style={{ marginTop: 12, fontSize: 18, color: colors.primary }}>
-          {si.screening.calculating}
-        </SiText>
-      </View>
+      <Screen scene="owl" title={si.screening.introTitle}>
+        <PaperCard style={{ alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={colors.blue} />
+          <Txt size={26} weight="bold" color={colors.navy} style={{ marginTop: s(10) }}>
+            {si.screening.calculating}
+          </Txt>
+        </PaperCard>
+      </Screen>
     );
   }
 
+  // Mockup 7: owl scene with the game's instructions
   if (phase === 'instruction') {
     return (
-      <View className="flex-1">
-        <TopBar title={title} right={<ProgressDots total={TASK_ORDER.length} current={block} />} />
-        <MathBackground>
-          <View className="flex-1 flex-row items-center justify-center px-6">
-            <Mascot size={110} />
-            <Card className="ml-6 items-start" style={{ width: '55%' }}>
-              <SiText weight="bold" style={{ fontSize: 22, color: colors.primary }}>
-                {info.title}
-              </SiText>
-              <SiText style={{ fontSize: 17, marginTop: 6 }}>{info.instruction}</SiText>
-              <View className="mt-4 w-full flex-row items-center justify-between">
-                <SiText style={{ fontSize: 15, color: colors.muted }}>{si.common.ready}</SiText>
-                <BigButton label={si.common.start} icon="play" onPress={() => setPhase('gap')} />
-              </View>
-            </Card>
+      <Screen scene="owl" title={title} right={<DotsPill total={TASK_ORDER.length} current={block} />}>
+        <PaperCard>
+          <Highlight size={36}>{info.title}</Highlight>
+          <Txt size={27} weight="semi" color={colors.navy} style={{ marginTop: s(14), paddingHorizontal: s(20) }}>
+            {info.instruction}
+          </Txt>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(24), marginTop: s(20) }}>
+            <InfoBox icon="help" style={{ flex: 1 }}>
+              <Txt size={22} weight="semi" color={colors.navy}>
+                {si.common.ready}
+              </Txt>
+            </InfoBox>
+            <Btn3D label={si.common.start} icon="play" color={colors.blue} dark={colors.blueDark} onPress={() => setPhase('gap')} style={{ flex: 1.1 }} />
           </View>
-        </MathBackground>
-      </View>
+        </PaperCard>
+      </Screen>
     );
   }
 
-  const [yesLabel, noLabel, yesColor, noColor] =
+  // Mockups 5 and 6: boy-at-desk scene with the question card
+  const [yesLabel, noLabel] =
     trial.kind === 'verify'
-      ? [si.common.correct, si.common.wrong, colors.green, colors.red]
+      ? [si.common.correct, si.common.wrong]
       : trial.kind === 'memory'
-        ? [si.common.yes, si.common.no, colors.primaryLight, colors.purple]
-        : [si.common.same, si.common.different, colors.primaryLight, colors.purple];
+        ? [si.common.yes, si.common.no]
+        : [si.common.same, si.common.different];
   const prompt =
     trial.kind === 'verify'
       ? si.screening.ask.verify
@@ -182,26 +181,38 @@ export default function ScreeningPlay() {
             : phase === 'stimulus'
               ? si.screening.ask.memoryAsk
               : si.screening.ask.memoryWatch;
+  const answering = phase === 'stimulus';
 
   return (
-    <View className="flex-1">
-      <TopBar title={title} right={<ProgressDots total={trials.length} current={trialIdx} />} />
-      <MathBackground>
-        <View className="flex-1 items-center justify-evenly px-6 py-2">
-          <SiText weight="medium" style={{ fontSize: 19, color: colors.primary }}>
-            {prompt}
-          </SiText>
+    <Screen
+      scene="boyQuestion"
+      title={title}
+      right={
+        <>
+          <DotsPill total={trials.length} current={trialIdx} />
+          <StarPill label={`${si.common.stars} ${stars}`} />
+        </>
+      }
+    >
+      <PaperCard style={{ alignItems: 'center', paddingVertical: s(20) }}>
+        <Highlight tone="blue" size={30}>
+          {prompt}
+        </Highlight>
+        <View style={{ minHeight: s(250), alignItems: 'center', justifyContent: 'center', marginVertical: s(12) }}>
           {phase === 'gap' ? (
-            <Text style={{ fontSize: 44, color: colors.primarySoft, fontWeight: '800' }}>+</Text>
+            <Text style={{ fontSize: s(80), fontWeight: '900', color: colors.skyBorder }}>+</Text>
           ) : (
             <Stimulus trial={trial} showStars={phase === 'memoryShow'} />
           )}
-          <View className="flex-row" style={{ opacity: phase === 'stimulus' ? 1 : 0 }} pointerEvents={phase === 'stimulus' ? 'auto' : 'none'}>
-            <BigButton label={`✓  ${yesLabel}`} color={yesColor} size="lg" onPress={() => record(true)} style={{ marginHorizontal: 14, minWidth: 170 }} />
-            <BigButton label={`✗  ${noLabel}`} color={noColor} size="lg" onPress={() => record(false)} style={{ marginHorizontal: 14, minWidth: 170 }} />
-          </View>
         </View>
-      </MathBackground>
-    </View>
+        <View
+          style={{ flexDirection: 'row', gap: s(30), alignSelf: 'stretch', opacity: answering ? 1 : 0 }}
+          pointerEvents={answering ? 'auto' : 'none'}
+        >
+          <Btn3D label={yesLabel} icon="checkmark" onPress={() => record(true)} style={{ flex: 1 }} />
+          <Btn3D label={noLabel} icon="close" color={colors.red} dark={colors.redDark} onPress={() => record(false)} style={{ flex: 1 }} />
+        </View>
+      </PaperCard>
+    </Screen>
   );
 }
