@@ -38,13 +38,13 @@ const MENU_ITEMS: MenuItem[] = [
     title: "අකුරෙන් වචනයට",
     icon: "document-text",
     iconBg: "#3B82F6",
-    route: "/sinhala-writing/mahaprana/words",
+    route: "/sinhala-writing/mahaprana/akurenwachanayta",
   },
   {
     title: "දැනුම පිරික්සමු  ",
     icon: "trophy",
     iconBg: "#F5A524",
-    route: "/sinhala-writing/mahaprana/progress",
+    route: "/sinhala-writing/mahaprana/danumabalamu",
   },
 ];
 

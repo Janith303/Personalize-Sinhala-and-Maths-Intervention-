@@ -34,7 +34,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-audio"
+      "expo-audio",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
