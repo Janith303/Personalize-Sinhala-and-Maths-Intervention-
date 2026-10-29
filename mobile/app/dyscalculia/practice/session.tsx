@@ -1,29 +1,31 @@
 // One practice session (8 questions) for a skill area and level, then stars and the next step:
-// 2+ stars unlocks the next level; below 50 % suggests an easier level.
+// 2+ stars unlocks the next level; below 50 % suggests an easier level. Hints are allowed here.
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Icon, StarRow } from '../../../components/dyscalculia/Icon';
-import { MathBackground } from '../../../components/dyscalculia/MathBackground';
-import { QuestionPlayer } from '../../../components/dyscalculia/QuestionPlayer';
-import { BigButton, Card, Mascot, SiText, TopBar } from '../../../components/dyscalculia/ui';
-import { si } from '../../../constants/dyscalculia/strings.si';
-import { areaColors, colors } from '../../../constants/dyscalculia/theme';
-import { useDyscalculia } from '../../../contexts/dyscalculia/DyscalculiaContext';
-import type { SkillArea } from '../../../types/dyscalculia';
-import { makeQuestions, MAX_LEVEL } from '../../../utils/dyscalculia/questions';
-import { starsFor } from '../../../utils/dyscalculia/scoring';
+
+import { Txt, useU } from '@/components/common/layout';
+import { Btn3D, PaperCard, Screen, StarPill, Stars } from '@/components/dyscalculia/kit';
+import { QuestionPlayer } from '@/components/dyscalculia/QuestionPlayer';
+import { si } from '@/constants/dyscalculia/strings.si';
+import { areaColors, colors } from '@/constants/dyscalculia/theme';
+import { useDyscalculia } from '@/contexts/dyscalculia/DyscalculiaContext';
+import type { SkillArea } from '@/types/dyscalculia';
+import { makeQuestions, MAX_LEVEL } from '@/utils/dyscalculia/questions';
+import { starsFor } from '@/utils/dyscalculia/scoring';
 
 export default function PracticeSession() {
+  const { s } = useU();
   const params = useLocalSearchParams<{ area: SkillArea; level: string }>();
   const area: SkillArea = params.area ?? 'quantity';
   const level = Math.min(MAX_LEVEL, Math.max(1, Number(params.level) || 1));
-  const { savePractice, addStars } = useDyscalculia();
+  const { stars, savePractice, addStars } = useDyscalculia();
 
   const [round, setRound] = useState(0);
   const [questions, setQuestions] = useState(() => makeQuestions(area, level));
   const [result, setResult] = useState<{ correct: number; total: number; stars: number } | null>(null);
-  const title = `${si.areas[area]} · ${si.practice.level(level)}`;
+  const title = `${si.areas[area]} • ${si.practice.level(level)}`;
 
   const goLevel = (l: number) =>
     router.replace({ pathname: '/dyscalculia/practice/session', params: { area, level: String(l) } });
@@ -35,12 +37,13 @@ export default function PracticeSession() {
         title={title}
         questions={questions}
         feedback="full"
+        hints
         onFinish={(rs) => {
           const correct = rs.filter((r) => r.correct).length;
-          const stars = starsFor(correct / rs.length);
-          savePractice(area, level, stars);
-          addStars(stars);
-          setResult({ correct, total: rs.length, stars });
+          const earned = starsFor(correct / rs.length);
+          savePractice(area, level, earned);
+          addStars(earned);
+          setResult({ correct, total: rs.length, stars: earned });
         }}
       />
     );
@@ -49,63 +52,66 @@ export default function PracticeSession() {
   const passed = result.stars >= 2;
   const struggling = result.correct / result.total < 0.5;
   return (
-    <View className="flex-1">
-      <TopBar title={title} onBack={() => router.replace('/dyscalculia/practice')} />
-      <MathBackground>
-        <View className="flex-1 flex-row items-center justify-center px-6">
-          <Mascot size={120} picture={passed ? 'owl_party' : 'owl'} />
-          <Card className="ml-6 items-center" style={{ width: '58%' }}>
-            <SiText weight="bold" style={{ fontSize: 22, color: areaColors[area].main }}>
-              {si.practice.sessionDone}
-            </SiText>
-            <View className="my-2 flex-row">
-              <StarRow filled={result.stars} total={3} size={38} />
-            </View>
-            <SiText style={{ fontSize: 17 }}>{si.practice.score(result.correct, result.total)}</SiText>
-            {passed && level < MAX_LEVEL ? (
-              <View className="mt-1 flex-row items-center">
-                <Icon name="unlock" size={20} style={{ marginRight: 6 }} />
-                <SiText weight="medium" style={{ fontSize: 15, color: colors.green }}>
-                  {si.practice.levelUp}
-                </SiText>
-              </View>
-            ) : null}
-            {struggling && level > 1 ? (
-              <SiText weight="medium" style={{ fontSize: 15, color: colors.amber, marginTop: 4 }}>
-                {si.practice.tryEasier}
-              </SiText>
-            ) : null}
-            <View className="mt-4 flex-row flex-wrap justify-center">
-              <BigButton
-                label={si.practice.again}
-                icon="replay"
-                size="sm"
-                color={colors.primaryLight}
-                style={{ margin: 4 }}
-                onPress={() => {
-                  setQuestions(makeQuestions(area, level));
-                  setResult(null);
-                  setRound(round + 1);
-                }}
-              />
-              {struggling && level > 1 ? (
-                <BigButton label={si.practice.level(level - 1)} icon="arrow_down" size="sm" color={colors.amber} style={{ margin: 4 }} onPress={() => goLevel(level - 1)} />
-              ) : null}
-              {passed && level < MAX_LEVEL ? (
-                <BigButton label={si.practice.nextLevel} icon="arrow_up" size="sm" color={colors.green} style={{ margin: 4 }} onPress={() => goLevel(level + 1)} />
-              ) : null}
-              <BigButton
-                label={si.practice.backToMap}
-                icon="map"
-                size="sm"
-                color={colors.purple}
-                style={{ margin: 4 }}
-                onPress={() => router.replace('/dyscalculia/practice')}
-              />
-            </View>
-          </Card>
+    <Screen
+      scene={passed ? 'owlParty' : 'owl'}
+      title={title}
+      onBack={() => router.replace('/dyscalculia/practice')}
+      right={<StarPill label={`${si.common.stars} ${stars}`} />}
+    >
+      <PaperCard border={passed ? colors.greenBorder : undefined} dash={passed ? '#C7EBD4' : undefined} style={{ alignItems: 'center' }}>
+        <Txt size={38} weight="black" color={areaColors[area].main} align="center">
+          {si.practice.sessionDone}
+        </Txt>
+        <View style={{ marginVertical: s(8) }}>
+          <Stars filled={result.stars} total={3} size={76} />
         </View>
-      </MathBackground>
-    </View>
+        <Txt size={27} weight="semi" color={colors.navy}>
+          {si.practice.score(result.correct, result.total)}
+        </Txt>
+        {passed && level < MAX_LEVEL ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
+            <Ionicons name="lock-open" size={s(28)} color={colors.green} />
+            <Txt size={23} weight="bold" color={colors.green}>
+              {si.practice.levelUp}
+            </Txt>
+          </View>
+        ) : null}
+        {struggling && level > 1 ? (
+          <Txt size={23} weight="bold" color={colors.amberDark}>
+            {si.practice.tryEasier}
+          </Txt>
+        ) : null}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: s(14), marginTop: s(16) }}>
+          <Btn3D
+            label={si.practice.again}
+            icon="refresh"
+            color={colors.blue}
+            dark={colors.blueDark}
+            height={64}
+            size={22}
+            onPress={() => {
+              setQuestions(makeQuestions(area, level));
+              setResult(null);
+              setRound(round + 1);
+            }}
+          />
+          {struggling && level > 1 ? (
+            <Btn3D label={si.practice.level(level - 1)} icon="arrow-down" color={colors.amber} dark={colors.amberDark} height={64} size={22} onPress={() => goLevel(level - 1)} />
+          ) : null}
+          {passed && level < MAX_LEVEL ? (
+            <Btn3D label={si.practice.nextLevel} icon="arrow-up" height={64} size={22} onPress={() => goLevel(level + 1)} />
+          ) : null}
+          <Btn3D
+            label={si.practice.backToMap}
+            icon="map"
+            color={colors.purple}
+            dark={colors.purpleDark}
+            height={64}
+            size={22}
+            onPress={() => router.replace('/dyscalculia/practice')}
+          />
+        </View>
+      </PaperCard>
+    </Screen>
   );
 }
