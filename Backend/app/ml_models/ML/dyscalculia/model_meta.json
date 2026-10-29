@@ -1,0 +1,45 @@
+{
+  "model": "Monotonic XGBoost on 6 arithmetic features (notebook 13)",
+  "features": [
+    "SmallProblem_acc",
+    "LargeProblem_acc",
+    "Plus1_acc",
+    "SmallProblem_rt",
+    "LargeProblem_rt",
+    "Plus1_rt"
+  ],
+  "imputer_medians": {
+    "SmallProblem_acc": 0.875,
+    "LargeProblem_acc": 0.7083,
+    "Plus1_acc": 0.9583,
+    "SmallProblem_rt": 2557.0,
+    "LargeProblem_rt": 3083.5,
+    "Plus1_rt": 2009.0
+  },
+  "monotone_constraints": {
+    "SmallProblem_acc": -1,
+    "LargeProblem_acc": -1,
+    "Plus1_acc": -1,
+    "SmallProblem_rt": 1,
+    "LargeProblem_rt": 1,
+    "Plus1_rt": 1
+  },
+  "screening_threshold": 0.37086403369903564,
+  "nested_cv": {
+    "sensitivity": 0.7933333333333334,
+    "specificity": 0.5803571428571428
+  },
+  "hyperparameters": {
+    "colsample_bytree": 0.8,
+    "learning_rate": 0.1,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 100,
+    "scale_pos_weight": 1.2666666666666666,
+    "subsample": 0.8
+  },
+  "versions": {
+    "xgboost": "3.4.1",
+    "scikit-learn": "1.6.1"
+  }
+}
