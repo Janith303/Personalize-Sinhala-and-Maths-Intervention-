@@ -32,6 +32,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "අකුරේ ඡායාරූපයක් ගැනීමට කැමරාව භාවිතා කිරීමට ඉඩ දෙන්න",
+          "photosPermission": "අකුරේ ඡායාරූපයක් තෝරා ගැනීමට ඡායාරූප භාවිතා කිරීමට ඉඩ දෙන්න",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
