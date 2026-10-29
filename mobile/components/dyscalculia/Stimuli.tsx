@@ -285,6 +285,48 @@ export function NumberTrain({ items, car = 84 }: { items: (number | null)[]; car
   );
 }
 
+/** 0..max number line with a tick per number; only the ends (and the middle for 0-20) are labelled.
+ *  An arrow above points at `value`. */
+export function NumberLine({ max, value, width = 620 }: { max: number; value: number; width?: number }) {
+  const { s } = useU();
+  const pad = 34;
+  const x = (n: number) => s(pad + ((width - 2 * pad) * n) / max);
+  const labelled = max === 20 ? [0, 10, 20] : [0, max];
+  return (
+    <View style={{ width: s(width), height: s(190), borderRadius: s(26), backgroundColor: colors.sky, borderWidth: s(4), borderColor: '#5AA6EE' }}>
+      {/* arrow */}
+      <View style={{ position: 'absolute', left: x(value) - s(22), top: s(14), alignItems: 'center', width: s(44) }}>
+        <View style={{ width: s(12), height: s(34), borderRadius: s(6), backgroundColor: colors.red }} />
+        <View
+          style={{
+            width: 0,
+            height: 0,
+            borderLeftWidth: s(20),
+            borderRightWidth: s(20),
+            borderTopWidth: s(24),
+            borderLeftColor: 'transparent',
+            borderRightColor: 'transparent',
+            borderTopColor: colors.red,
+          }}
+        />
+      </View>
+      {/* line */}
+      <View style={{ position: 'absolute', left: x(0), width: x(max) - x(0), top: s(92), height: s(6), borderRadius: s(3), backgroundColor: colors.navy }} />
+      {Array.from({ length: max + 1 }, (_, n) => {
+        const big = labelled.includes(n);
+        return (
+          <View key={n} style={{ position: 'absolute', left: x(n) - s(2), top: s(big ? 78 : 84), width: s(4), height: s(big ? 34 : 22), backgroundColor: colors.navy }} />
+        );
+      })}
+      {labelled.map((n) => (
+        <View key={`l${n}`} style={{ position: 'absolute', left: x(n) - s(30), top: s(116), width: s(60), alignItems: 'center' }}>
+          <Num size={40}>{n}</Num>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** Visual for a Stage 2 / practice question. */
 export function QuestionVisualView({ visual, seed }: { visual: QuestionVisual; seed: number }) {
   const { s } = useU();
@@ -302,5 +344,7 @@ export function QuestionVisualView({ visual, seed }: { visual: QuestionVisual; s
       return <NumberTrain items={visual.items} />;
     case 'equation':
       return <Equation parts={visual.text.split(/\s+/).filter(Boolean)} size={80} />;
+    case 'numberLine':
+      return <NumberLine max={visual.max} value={visual.value} />;
   }
 }

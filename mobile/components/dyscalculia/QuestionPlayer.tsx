@@ -50,15 +50,17 @@ export function QuestionPlayer({
   const startedAt = useRef(Date.now());
   const q = questions[index];
 
+  // A hint fades out one wrong answer; with only two choices that would give the answer away.
+  const hintPossible = q.options.length > 2;
   const showHint = () => {
     const wrong = q.options.filter((o) => o !== q.answer && !hidden.includes(o));
-    if (wrong.length > 1 || (wrong.length === 1 && q.options.length > 2)) setHidden([...hidden, pick(wrong)]);
+    if (hintPossible && wrong.length) setHidden([...hidden, pick(wrong)]);
   };
 
   const answer = (option: number | string) => {
     if (shown) return;
     const correct = option === q.answer;
-    results.current.push({ area: q.area, correct, rtMs: Date.now() - startedAt.current });
+    results.current.push({ area: q.area, kind: q.kind, correct, rtMs: Date.now() - startedAt.current });
     const fb: Feedback =
       feedback === 'gentle'
         ? { ok: true, text: si.common.keepGoing }
@@ -84,7 +86,7 @@ export function QuestionPlayer({
   return (
     <Screen scene="boyQuestion" title={header} right={<CountPill label={`${index + 1} / ${questions.length}`} />}>
       <PaperCard style={{ alignItems: 'center', paddingVertical: s(20) }}>
-        {hints ? <HintButton onPress={showHint} used={hidden.length > 0 || !!shown} /> : null}
+        {hints ? <HintButton onPress={showHint} used={!hintPossible || hidden.length > 0 || !!shown} /> : null}
         {shown ? (
           <View style={{ backgroundColor: shown.ok ? colors.green : colors.amber, borderRadius: s(26), paddingHorizontal: s(30) }}>
             <Txt size={30} weight="black" color={colors.white} align="center">

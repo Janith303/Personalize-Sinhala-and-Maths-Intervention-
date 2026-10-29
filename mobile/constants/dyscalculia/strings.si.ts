@@ -122,6 +122,8 @@ export const si = {
     missingNumber: 'නැති අංකය කුමක්ද?',
     solve: 'පිළිතුර කුමක්ද?',
     chooseSign: 'නිවැරදි ලකුණ තෝරන්න',
+    numberLine: 'ඊතලය පෙන්වන අංකය කුමක්ද?',
+    orderCheck: 'මෙම අංක නිවැරදි පිළිවෙළටද?',
     left: 'වම',
     right: 'දකුණ',
   },

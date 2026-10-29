@@ -64,10 +64,26 @@ export type QuestionVisual =
   | { type: 'dots'; count: number }
   | { type: 'compareDots'; left: number; right: number }
   | { type: 'train'; items: (number | null)[] }
-  | { type: 'equation'; text: string };
+  | { type: 'equation'; text: string }
+  | { type: 'numberLine'; max: number; value: number };
+
+/** Question types, sent with each Stage 2 answer (e.g. 'numberLine', 'orderCheck'). */
+export type QuestionKind =
+  | 'dotCount'
+  | 'dotCompare'
+  | 'numberLine'
+  | 'nextNumber'
+  | 'missingNumber'
+  | 'backwards'
+  | 'orderCheck'
+  | 'add'
+  | 'addCarry'
+  | 'subtract'
+  | 'chooseSign';
 
 export interface Question {
   area: SkillArea;
+  kind: QuestionKind;
   prompt: string;
   visual: QuestionVisual;
   options: (number | string)[];
@@ -76,6 +92,7 @@ export interface Question {
 
 export interface QuestionResult {
   area: SkillArea;
+  kind: QuestionKind;
   correct: boolean;
   rtMs: number;
 }
