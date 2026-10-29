@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.dyscalculia.screening import router as dyscalculia_router
+from app.api.dyscalculia import router as dyscalculia_router
 
 app = FastAPI()
 
