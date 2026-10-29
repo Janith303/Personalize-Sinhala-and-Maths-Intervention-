@@ -84,7 +84,7 @@ const MODULES: Module[] = [
     color: "#2FB463",
     tint: "#EBFBF0",
     border: "#CDEFD8",
-    route: "/sinhala-writing/letter-size",
+    route: "/sinhala-writing/akuru-pramanaya",
     art: "tracing",
   },
   {
