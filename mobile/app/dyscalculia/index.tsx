@@ -1,7 +1,7 @@
 // Module home: reached from the "ඩිස්කැල්කුලියා" card on the maths screen.
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Txt, useU } from '@/components/common/layout';
@@ -55,13 +55,17 @@ function StageCard({
   children?: ReactNode;
 }) {
   const { s } = useU();
+  // Pressed state in React state (not a style function, which NativeWind drops on Android).
+  const [pressed, setPressed] = useState(false);
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={({ pressed }) => ({
+      style={{
         flex: 1,
         marginHorizontal: s(9),
         borderRadius: s(32),
@@ -73,7 +77,7 @@ function StageCard({
         paddingTop: s(34),
         overflow: 'hidden',
         transform: [{ scale: pressed ? 0.97 : 1 }],
-      })}
+      }}
     >
       {children}
       {done ? (

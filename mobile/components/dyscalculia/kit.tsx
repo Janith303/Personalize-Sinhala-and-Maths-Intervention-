@@ -2,7 +2,7 @@
 // layout (sizes are design pixels on the shared 1280 x 590 canvas, scaled with useU()).
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import type { ComponentProps, ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Image, ImageBackground, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -271,13 +271,18 @@ export function Btn3D({
   style?: StyleProp<ViewStyle>;
 }) {
   const { s } = useU();
+  // Pressed state is tracked in React state: NativeWind drops Pressable styles written as
+  // functions on Android, which made the button colours disappear.
+  const [pressed, setPressed] = useState(false);
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [
+      style={[
         {
           height: s(height),
           borderRadius: s(22),
