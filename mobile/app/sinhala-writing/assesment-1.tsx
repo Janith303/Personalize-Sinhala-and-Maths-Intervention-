@@ -9,11 +9,15 @@ import {
   ImageSourcePropType,
   LayoutChangeEvent,
   Alert,
+  Modal, // NEW
+  ActivityIndicator, // NEW
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Stack } from "expo-router";
 import { useSafeAreaInsets, EdgeInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import { checkSpacing, SpacingResult } from "../../services/sinhala_writing/spacingApi"; // NEW
+import SpacingResultCard from "../../components/sinhala-writing/SpacingResultCard"; // NEW
 
 const TITLE = "සිංහල ඇගයුම 1";
 const SUBTITLE = "සිංහල ලිවීම - මූලික පරීක්ෂණය";
@@ -41,6 +45,9 @@ const STEPS: Step[] = [
   { n: 2, color: "#2F80ED", text: "ලියූ වාක්‍යයේ පින්තූරයක් ගන්න.", icon: { ion: "camera" } },
   { n: 3, color: "#EC407A", text: "පැහැදිලිව පෙනෙන සේ ඡායාරූපය උඩුගත කරන්න.", icon: { ion: "image" } },
 ];
+
+// NEW: allowsEditing opens a crop screen, so the child can select only the line they wrote
+const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.8, allowsEditing: true };
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
@@ -106,6 +113,9 @@ export default function SinhalaAssessment1() {
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false); // NEW: waiting for the backend
+  const [result, setResult] = useState<SpacingResult | null>(null); // NEW: backend answer
+  const [showResult, setShowResult] = useState(false); // NEW: popup open/closed
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -117,24 +127,48 @@ export default function SinhalaAssessment1() {
 
   /* ---------------- photo actions ---------------- */
 
+  // NEW: send the photo to the backend and show the result
+  const checkPhoto = async (uri: string) => {
+    setPhotoUri(uri);
+    setResult(null);
+    setChecking(true);
+    try {
+      setResult(await checkSpacing(uri));
+      setShowResult(true);
+    } catch (e) {
+      Alert.alert("නැවත උත්සාහ කරන්න", e instanceof Error ? e.message : "දෝෂයක් ඇති විය.");
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const takePhoto = async () => {
+    if (checking) return;
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("අවසර අවශ්‍යයි", "කැමරාව භාවිතා කිරීමට අවසර දෙන්න.");
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
-    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+    const picked = await ImagePicker.launchCameraAsync(PICKER_OPTIONS);
+    if (!picked.canceled) checkPhoto(picked.assets[0].uri);
   };
 
   const pickFromGallery = async () => {
+    if (checking) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("අවසර අවශ්‍යයි", "ගැලරිය භාවිතා කිරීමට අවසර දෙන්න.");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
-    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+    const picked = await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
+    if (!picked.canceled) checkPhoto(picked.assets[0].uri);
+  };
+
+  // NEW: clear the photo and result so the child can try again
+  const resetPhoto = () => {
+    setShowResult(false);
+    setResult(null);
+    setPhotoUri(null);
   };
 
   return (
@@ -246,12 +280,33 @@ export default function SinhalaAssessment1() {
                     {photoUri ? (
                       <>
                         <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
-                        <TouchableOpacity activeOpacity={0.8} style={styles.removeBadge} onPress={() => setPhotoUri(null)}>
-                          <Ionicons name="close" size={z.previewText * 1.3} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <View style={styles.doneBadge}>
-                          <Ionicons name="checkmark" size={z.previewText * 1.3} color="#FFFFFF" />
-                        </View>
+                        {checking ? (
+                          // NEW: spinner while the backend checks the photo
+                          <View style={styles.checkingOverlay}>
+                            <ActivityIndicator size="large" color="#FFFFFF" />
+                            <Text style={styles.previewText}>පරීක්ෂා කරමින්...</Text>
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity activeOpacity={0.8} style={styles.removeBadge} onPress={resetPhoto}>
+                              <Ionicons name="close" size={z.previewText * 1.3} color="#FFFFFF" />
+                            </TouchableOpacity>
+                            {/* NEW: green ✓ or red ✗ from the model; tap to open the result again */}
+                            {result && (
+                              <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={[styles.doneBadge, !result.is_correct && styles.wrongBadge]}
+                                onPress={() => setShowResult(true)}
+                              >
+                                <Ionicons
+                                  name={result.is_correct ? "checkmark" : "close"}
+                                  size={z.previewText * 1.3}
+                                  color="#FFFFFF"
+                                />
+                              </TouchableOpacity>
+                            )}
+                          </>
+                        )}
                       </>
                     ) : (
                       <>
@@ -287,6 +342,30 @@ export default function SinhalaAssessment1() {
           </View>
         )}
       </ImageBackground>
+
+      {/* ================= RESULT POPUP (NEW) ================= */}
+      <Modal
+        visible={showResult && result !== null}
+        transparent
+        animationType="fade"
+        supportedOrientations={["landscape", "portrait"]}
+        onRequestClose={() => setShowResult(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            {result && (
+              <SpacingResultCard
+                result={result}
+                onRetry={resetPhoto}
+                onNext={() => {
+                  setShowResult(false);
+                  router.push("/sinhala-writing/assesment-2");
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -505,6 +584,16 @@ const makeStyles = (z: Sizes) => {
       alignItems: "center",
       justifyContent: "center",
     },
+    // NEW: red badge when the spacing is wrong
+    wrongBadge: { backgroundColor: "#DC2626" },
+    // NEW: dark layer + spinner while checking
+    checkingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+    },
     removeBadge: {
       position: "absolute",
       top: 8,
@@ -542,5 +631,15 @@ const makeStyles = (z: Sizes) => {
       shadowOffset: { width: 0, height: 2 },
     },
     btnText: { fontSize: z.btnFont, lineHeight: z.btnFont * 1.4, fontWeight: "800" },
+
+    /* ===== Result popup (NEW) ===== */
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: z.pad,
+    },
+    modalBox: { width: "72%", maxWidth: 820, maxHeight: "92%" },
   });
 };
