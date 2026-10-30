@@ -6,13 +6,13 @@ from app.api.maths_slow.attempts import router as maths_slow_router
 
 app = FastAPI()
 
-# ADD (only once for the whole backend; skip if a teammate already added CORS)
+
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(sinhala_spacing_router)        
 app.include_router(sinhala_baseline_router)    
 app.include_router(maths_slow_router)       
-                                       # ADD                                    # ADD
+                                       
 
 @app.get("/")
 def home():
