@@ -147,316 +147,299 @@ export default function ResultScreen() {
           paddingBottom: H * 0.05,
         }}
       >
-        <View
-          style={{
-            flex: 1,
-            marginHorizontal: W * 0.03,
-            backgroundColor: "#F1F9F3",
-            borderRadius: d(60),
-            borderWidth: d(6),
-            borderColor: "#2FA566",
-            padding: d(22),
-            shadowColor: "#06361F",
-            shadowOffset: { width: 0, height: 5 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <FloatingLetters />
+        <FloatingLetters />
 
-          <View style={{ flex: 1, flexDirection: "row", gap: d(22) }}>
-            {/* ---- අකුරු ලිවීම ---- */}
+        <View style={{ flex: 1, flexDirection: "row", gap: d(22) }}>
+          {/* ---- අකුරු ලිවීම ---- */}
+          <View
+            style={{
+              flex: 1.15,
+              backgroundColor: "rgba(115, 192, 125, 0.7)",
+              borderRadius: d(30),
+              borderWidth: d(6),
+              borderColor: "#237146",
+              padding: d(16),
+            }}
+          >
             <View
               style={{
-                flex: 1.15,
-                backgroundColor: "#2D6CDF",
-                borderRadius: d(30),
-                borderWidth: d(6),
-                borderColor: "#4DB97E",
-                padding: d(16),
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: d(14),
               }}
             >
               <View
                 style={{
-                  flexDirection: "row",
+                  width: d(56),
+                  height: d(56),
+                  borderRadius: d(14),
+                  backgroundColor: "#0B7A45",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: d(14),
                 }}
               >
-                <View
-                  style={{
-                    width: d(56),
-                    height: d(56),
-                    borderRadius: d(14),
-                    backgroundColor: "#0B7A45",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <DText size={36} color="#fff">
-                    අ
-                  </DText>
-                </View>
-                <View style={{ alignItems: "center" }}>
-                  <DText
-                    size={42}
-                    color="#111"
-                    align="center"
-                    style={{ lineHeight: d(50) }}
-                  >
-                    අකුරු ලිවීම
-                  </DText>
-                </View>
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: d(14),
-                  marginTop: d(6),
-                }}
-              >
-                <DText size={78} color="#111" style={{ lineHeight: d(94) }}>
-                  {letterScore} / {LETTERS.length}
+                <DText size={36} color="#fff">
+                  අ
                 </DText>
-                <View
-                  style={{
-                    backgroundColor: letterScore < 3 ? "#C62828" : "#0B7A45",
-                    borderRadius: d(22),
-                    borderWidth: d(2),
-                    borderColor: "#111",
-                    paddingHorizontal: d(18),
-                    paddingVertical: d(23),
-                  }}
-                >
-                  <DText size={28} color="#fff">
-                    {letterLabel.text}
-                  </DText>
-                </View>
               </View>
+              <View style={{ alignItems: "center" }}>
+                <DText
+                  size={42}
+                  color="#111"
+                  align="center"
+                  style={{ lineHeight: d(50) }}
+                >
+                  අකුරු ලිවීම
+                </DText>
+              </View>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: d(14),
+                marginTop: d(30),
+              }}
+            >
+              <DText size={78} color="#08070e" style={{ lineHeight: d(94) }}>
+                {letterScore} / {LETTERS.length}
+              </DText>
               <View
                 style={{
-                  flex: 1,
-                  justifyContent: "flex-end",
-                  gap: d(6),
-                  marginTop: d(6),
+                  backgroundColor: letterScore <= 3 ? "#C62828" : "#0B7A45",
+                  borderRadius: d(22),
+                  borderWidth: d(2),
+                  borderColor: "#111",
+                  paddingHorizontal: d(18),
+                  paddingVertical: d(23),
                 }}
               >
-                {LETTERS.map((l, i) => {
-                  const ok = letterResults[i] === "correct";
-                  return (
+                <DText size={28} color="#fff">
+                  {letterLabel.text}
+                </DText>
+              </View>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "flex-end",
+                gap: d(6),
+                marginTop: d(2),
+              }}
+            >
+              {LETTERS.map((l, i) => {
+                const ok = letterResults[i] === "correct";
+                return (
+                  <View
+                    key={l.id}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      backgroundColor: "#f1faf4",
+                      borderRadius: d(14),
+                      borderWidth: d(3),
+                      borderColor: "#111",
+                      marginHorizontal: d(80),
+                      paddingHorizontal: d(14),
+                      height: d(58),
+                    }}
+                  >
+                    <DText
+                      size={40}
+                      color="#0B4A2A"
+                      style={{ lineHeight: d(58) }}
+                    >
+                      {l.glyph}
+                    </DText>
                     <View
-                      key={l.id}
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        backgroundColor: "#E9F8EC",
-                        borderRadius: d(14),
-                        borderWidth: d(3),
-                        borderColor: "#111",
-                        marginHorizontal: d(80),
-                        paddingHorizontal: d(14),
-                        height: d(58),
+                        gap: d(6),
+                        backgroundColor: ok ? "#DDF0E4" : accent.wrongBg,
+                        borderRadius: d(16),
+                        borderWidth: d(2),
+                        borderColor: ok ? "#7BC89C" : "#E5A6A1",
+                        paddingHorizontal: d(12),
+                        paddingVertical: d(1),
                       }}
                     >
+                      <Ionicons
+                        name={ok ? "checkmark" : "close"}
+                        size={d(22)}
+                        color={ok ? "#0B7A45" : accent.wrongText}
+                      />
                       <DText
-                        size={40}
-                        color="#0B4A2A"
-                        style={{ lineHeight: d(58) }}
+                        size={34}
+                        weight="black"
+                        color={ok ? "#0B7A45" : accent.wrongText}
                       >
-                        {l.glyph}
+                        {ok ? "නිවැරදි" : "වැරදි"}
                       </DText>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: d(6),
-                          backgroundColor: ok ? "#DDF0E4" : accent.wrongBg,
-                          borderRadius: d(16),
-                          borderWidth: d(2),
-                          borderColor: ok ? "#7BC89C" : "#E5A6A1",
-                          paddingHorizontal: d(12),
-                          paddingVertical: d(1),
-                        }}
-                      >
-                        <Ionicons
-                          name={ok ? "checkmark" : "close"}
-                          size={d(22)}
-                          color={ok ? "#0B7A45" : accent.wrongText}
-                        />
-                        <DText
-                          size={32}
-                          weight="black"
-                          color={ok ? "#0B7A45" : accent.wrongText}
-                        >
-                          {ok ? "නිවැරදි" : "වැරදි"}
-                        </DText>
-                      </View>
                     </View>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* ---- විරාම ලක්ෂණ ---- */}
-            <View
-              style={{
-                flex: 0.92,
-                backgroundColor: "#7A3FB5",
-                borderRadius: d(30),
-                borderWidth: d(6),
-                borderColor: "#B09AEF",
-                padding: d(16),
-                alignItems: "center",
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: d(14),
-                }}
-              >
-                <View
-                  style={{
-                    width: d(56),
-                    height: d(56),
-                    borderRadius: d(14),
-                    backgroundColor: accent.purple,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <DText size={30} color="#fff">
-                    ?!
-                  </DText>
-                </View>
-                <DText size={40} color="#111" style={{ lineHeight: d(50) }}>
-                  විරාම ලක්ෂණ
-                </DText>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <DText size={104} color="#111" style={{ lineHeight: d(126) }}>
-                  {punctuationScore ?? 0} / {PUNCTUATION_QUESTIONS.length}
-                </DText>
-                <View
-                  style={{
-                    backgroundColor:
-                      (punctuationScore ?? 0) < 3 ? "#C62828" : "#0B7A45",
-                    borderRadius: d(26),
-                    borderWidth: d(2),
-                    borderColor: "#111",
-                    paddingHorizontal: d(28),
-                    paddingVertical: d(23),
-                    marginTop: d(28),
-                  }}
-                >
-                  <DText size={34} color="#fff">
-                    {puncLabel.text}
-                  </DText>
-                </View>
-              </View>
-              <ScoreBars
-                score={punctuationScore ?? 0}
-                total={PUNCTUATION_QUESTIONS.length}
-              />
-            </View>
-
-            {/* ---- පිල්ලම් භාවිතය ---- */}
-            <View
-              style={{
-                flex: 0.92,
-                backgroundColor: "#D98A16",
-                borderRadius: d(30),
-                borderWidth: d(6),
-                borderColor: "#E8CA6A",
-                padding: d(16),
-                alignItems: "center",
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: d(14),
-                }}
-              >
-                <View
-                  style={{
-                    width: d(56),
-                    height: d(56),
-                    borderRadius: d(14),
-                    backgroundColor: accent.brown,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <DText size={30} color="#fff">
-                    කු
-                  </DText>
-                </View>
-                <DText size={40} color="#111" style={{ lineHeight: d(50) }}>
-                  පිල්ලම් භාවිතය
-                </DText>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <DText size={104} color="#111" style={{ lineHeight: d(126) }}>
-                  {pillamScore ?? 0} / {PILLAM_QUESTIONS.length}
-                </DText>
-                <View
-                  style={{
-                    backgroundColor:
-                      (pillamScore ?? 0) < 3 ? "#C62828" : "#0B7A45",
-                    borderRadius: d(26),
-                    borderWidth: d(2),
-                    borderColor: "#111",
-                    paddingHorizontal: d(28),
-                    paddingVertical: d(23),
-                    marginTop: d(28),
-                  }}
-                >
-                  <DText size={34} color="#fff">
-                    {pillamLabel.text}
-                  </DText>
-                </View>
-              </View>
-              <ScoreBars
-                score={pillamScore ?? 0}
-                total={PILLAM_QUESTIONS.length}
-              />
+                  </View>
+                );
+              })}
             </View>
           </View>
 
-          {/* retry button */}
-          <View style={{ alignItems: "center", paddingTop: d(16) }}>
-            <SlowButton
-              label="නැවත උත්සාහ කරමු"
-              icon="refresh"
-              iconLeft
-              width={440}
-              height={66}
-              size={30}
-              onPress={() => {
-                reset();
-                router.replace("/sinhala-slow");
+          {/* ---- විරාම ලක්ෂණ ---- */}
+          <View
+            style={{
+              flex: 0.92,
+              backgroundColor: "rgba(187, 155, 219, 0.6)",
+              borderRadius: d(30),
+              borderWidth: d(6),
+              borderColor: "#493480",
+              padding: d(16),
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: d(14),
               }}
+            >
+              <View
+                style={{
+                  width: d(56),
+                  height: d(56),
+                  borderRadius: d(14),
+                  backgroundColor: accent.purple,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <DText size={30} color="#fff">
+                  ?!
+                </DText>
+              </View>
+              <DText size={40} color="#111" style={{ lineHeight: d(50) }}>
+                විරාම ලක්ෂණ
+              </DText>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <DText size={104} color="#111" style={{ lineHeight: d(126) }}>
+                {punctuationScore ?? 0} / {PUNCTUATION_QUESTIONS.length}
+              </DText>
+              <View
+                style={{
+                  backgroundColor:
+                    (punctuationScore ?? 0) <= 3 ? "#C62828" : "#0B7A45",
+                  borderRadius: d(26),
+                  borderWidth: d(2),
+                  borderColor: "#111",
+                  paddingHorizontal: d(28),
+                  paddingVertical: d(23),
+                  marginTop: d(28),
+                }}
+              >
+                <DText size={30} color="#fff">
+                  {puncLabel.text}
+                </DText>
+              </View>
+            </View>
+            <ScoreBars
+              score={punctuationScore ?? 0}
+              total={PUNCTUATION_QUESTIONS.length}
             />
           </View>
+
+          {/* ---- පිල්ලම් භාවිතය ---- */}
+          <View
+            style={{
+              flex: 0.92,
+              backgroundColor: "rgba(204, 162, 99, 0.8)",
+              borderRadius: d(30),
+              borderWidth: d(6),
+              borderColor: "#846e25",
+              padding: d(16),
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: d(14),
+              }}
+            >
+              <View
+                style={{
+                  width: d(56),
+                  height: d(56),
+                  borderRadius: d(14),
+                  backgroundColor: accent.brown,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <DText size={30} color="#fff">
+                  කු
+                </DText>
+              </View>
+              <DText size={40} color="#111" style={{ lineHeight: d(50) }}>
+                පිල්ලම් භාවිතය
+              </DText>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <DText size={104} color="#111" style={{ lineHeight: d(126) }}>
+                {pillamScore ?? 0} / {PILLAM_QUESTIONS.length}
+              </DText>
+              <View
+                style={{
+                  backgroundColor:
+                    (pillamScore ?? 0) < 3 ? "#C62828" : "#0B7A45",
+                  borderRadius: d(26),
+                  borderWidth: d(2),
+                  borderColor: "#111",
+                  paddingHorizontal: d(28),
+                  paddingVertical: d(23),
+                  marginTop: d(28),
+                }}
+              >
+                <DText size={30} color="#fff">
+                  {pillamLabel.text}
+                </DText>
+              </View>
+            </View>
+            <ScoreBars
+              score={pillamScore ?? 0}
+              total={PILLAM_QUESTIONS.length}
+            />
+          </View>
+        </View>
+
+        {/* retry button */}
+        <View style={{ alignItems: "center", paddingTop: d(16) }}>
+          <SlowButton
+            label="නැවත උත්සාහ කරමු"
+            icon="refresh"
+            iconLeft
+            width={440}
+            height={66}
+            size={30}
+            onPress={() => {
+              reset();
+              router.replace("/sinhala-slow");
+            }}
+          />
         </View>
       </View>
     </SlowPage>
