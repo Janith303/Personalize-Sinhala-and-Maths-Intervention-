@@ -46,3 +46,4 @@ yarn-error.*
 *.orig.*
 android/
 ios/
+*.keras
