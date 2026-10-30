@@ -5,7 +5,7 @@ import LinedLetter from "../linedletter";
 
 /* Optional girl picture (transparent PNG), e.g.
    require("../../../../assets/images/sinhala-writing/girl-pointing.png") */
-const GIRL_IMAGE: ImageSourcePropType | null = null;
+const GIRL_IMAGE: ImageSourcePropType | null = require("../../../../assets/images/sinhala-writing/girll.png");
 
 const GREEN = "#1F8A3B";
 const RED = "#E53935";
