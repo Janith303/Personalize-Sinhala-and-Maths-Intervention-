@@ -36,7 +36,7 @@ def decode_image(data: bytes) -> np.ndarray:
     except (UnidentifiedImageError, OSError) as e:
         raise InvalidImageError(MSG_BAD_IMAGE) from e
     gray = np.array(img)
-    # One written line is always wider than tall; a tall photo means the line is sideways, so turn it
+    
     if gray.shape[0] > gray.shape[1]:
         gray = np.ascontiguousarray(np.rot90(gray, -1))
     return gray
