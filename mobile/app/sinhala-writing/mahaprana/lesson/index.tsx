@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ImageBackground,
   Pressable,
@@ -100,14 +101,11 @@ export default function MahapranaLesson() {
             {/* INTRO: CHARACTER + SPEECH BUBBLE */}
             <View style={styles.introArea}>
               <View style={styles.characterArea}>
-                {/* To use your own girl picture, replace the Text below with:
-                    <Image
-                      source={require("../../../../assets/images/sinhala-writing/girl.png")}
-                      style={styles.characterImage}
-                      resizeMode="contain"
-                    />
-                    (and add Image to the react-native import) */}
-                <Text style={styles.characterEmoji}>👧🏻</Text>
+                <Image
+                  source={require("../../../../assets/images/sinhala-writing/writinggirl.png")}
+                  style={styles.characterImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.introBubble}>

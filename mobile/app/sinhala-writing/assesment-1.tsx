@@ -9,18 +9,25 @@ import {
   ImageSourcePropType,
   LayoutChangeEvent,
   Alert,
+  Modal, // NEW
+  ActivityIndicator, // NEW
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Stack } from "expo-router";
 import { useSafeAreaInsets, EdgeInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import { checkSpacing, SpacingResult } from "../../services/sinhala_writing/spacingApi"; // NEW
+import SpacingResultCard from "../../components/sinhala-writing/SpacingResultCard"; // NEW
+
+const TITLE = "සිංහල ඇගයුම 1";
+const SUBTITLE = "සිංහල ලිවීම - මූලික පරීක්ෂණය";
+const SENTENCE = "✏️ ඔබ කැමති වාක්‍යයක් ලියන්න";
+
+const BACKGROUND = require("../../assets/images/sinhala-writing/homebackground.png");
 
 // Girl writing illustration (transparent PNG), e.g.
 // require("../../assets/images/sinhala-writing/girl-writing.png")
 const GIRL_IMAGE: ImageSourcePropType | null = null;
-
-// The sentence the child has to write
-const SENTENCE = "මම පාසල් යමි.";
 
 const GREEN = "#2E7D4F";
 const NAVY = "#1E2A78";
@@ -34,38 +41,17 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  {
-    n: 1,
-    color: "#F5B400",
-    text: "පහත දී ඇති වාක්‍යය ඔබේ පොතේ ලියන්න.",
-    icon: { emoji: "📖" },
-  },
-  {
-    n: 2,
-    color: "#22A35A",
-    text: "වාක්‍යය පැහැදිලිව ලියන්න. අකුරු රේඛාව මත රැඳෙන්න.",
-    icon: { emoji: "📝" },
-  },
-  {
-    n: 3,
-    color: "#2F80ED",
-    text: "ලියූ වාක්‍යයේ පින්තූරයක් ගන්න.",
-    icon: { ion: "camera" },
-  },
-  {
-    n: 4,
-    color: "#EC407A",
-    text: "පැහැදිලිව පෙනෙන සේ ඡායාරූපය උඩුගත කරන්න.",
-    icon: { ion: "image" },
-  },
+  { n: 1, color: "#F5B400", text: "ඔබ කැමති වාක්‍යයක් ලියන්න.", icon: { emoji: "📖" } },
+  { n: 2, color: "#2F80ED", text: "ලියූ වාක්‍යයේ පින්තූරයක් ගන්න.", icon: { ion: "camera" } },
+  { n: 3, color: "#EC407A", text: "පැහැදිලිව පෙනෙන සේ ඡායාරූපය උඩුගත කරන්න.", icon: { ion: "image" } },
 ];
 
-const clamp = (v: number, min: number, max: number) =>
-  Math.min(Math.max(v, min), max);
+// NEW: allowsEditing opens a crop screen, so the child can select only the line they wrote
+const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.8, allowsEditing: true };
 
-/* ------------------------------------------------------------------
-   All sizes come from the real screen space → no scrolling needed.
-------------------------------------------------------------------- */
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+
+/* All sizes come from the real screen space → no scrolling needed. */
 function computeSizes(w: number, h: number, insets: EdgeInsets) {
   const pad = clamp(Math.min(w, h) * 0.03, 8, 24);
   const availH = h - insets.top - insets.bottom - pad * 2;
@@ -83,7 +69,6 @@ function computeSizes(w: number, h: number, insets: EdgeInsets) {
     insets,
     pad,
     gap,
-    availW,
 
     // header
     headerH,
@@ -99,9 +84,9 @@ function computeSizes(w: number, h: number, insets: EdgeInsets) {
     panelPad: clamp(bodyH * 0.04, 8, 22),
     tipH: clamp(bodyH * 0.11, 30, 70),
     tipTitle: clamp(bodyH * 0.05, 13, 28),
-    stepNum: clamp(bodyH * 0.075, 22, 50),
-    stepIcon: clamp(bodyH * 0.075, 20, 48),
-    stepText: clamp(bodyH * 0.04, 10, 20),
+    stepNum: clamp(bodyH * 0.085, 24, 54),
+    stepIcon: clamp(bodyH * 0.085, 22, 52),
+    stepText: clamp(bodyH * 0.046, 11, 22),
 
     // top-right card
     topH,
@@ -109,7 +94,7 @@ function computeSizes(w: number, h: number, insets: EdgeInsets) {
     topCircle: clamp(topH * 0.24, 28, 66),
     cardTitle: clamp(topH * 0.1, 13, 28),
     cardSub: clamp(topH * 0.065, 9, 16),
-    sentence: clamp(topH * 0.2, 18, 62),
+    sentence: clamp(topH * 0.15, 16, 46),
     girlH: topH * 1.05,
 
     // bottom-right card
@@ -117,7 +102,7 @@ function computeSizes(w: number, h: number, insets: EdgeInsets) {
     botCircle: clamp(botH * 0.18, 28, 66),
     btnH: clamp(botH * 0.17, 34, 64),
     btnFont: clamp(botH * 0.065, 11, 18),
-    previewIcon: clamp(botH * 0.18, 24, 64),
+    previewIcon: clamp(botH * 0.16, 22, 60),
     previewText: clamp(botH * 0.06, 10, 18),
   };
 }
@@ -128,65 +113,74 @@ export default function SinhalaAssessment1() {
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false); // NEW: waiting for the backend
+  const [result, setResult] = useState<SpacingResult | null>(null); // NEW: backend answer
+  const [showResult, setShowResult] = useState(false); // NEW: popup open/closed
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     if (width !== size.w || height !== size.h) setSize({ w: width, h: height });
   };
 
-  const z = useMemo(
-    () => computeSizes(size.w, size.h, insets),
-    [size.w, size.h, insets]
-  );
+  const z = useMemo(() => computeSizes(size.w, size.h, insets), [size.w, size.h, insets]);
   const styles = useMemo(() => makeStyles(z), [z]);
 
   /* ---------------- photo actions ---------------- */
 
+  // NEW: send the photo to the backend and show the result
+  const checkPhoto = async (uri: string) => {
+    setPhotoUri(uri);
+    setResult(null);
+    setChecking(true);
+    try {
+      setResult(await checkSpacing(uri));
+      setShowResult(true);
+    } catch (e) {
+      Alert.alert("නැවත උත්සාහ කරන්න", e instanceof Error ? e.message : "දෝෂයක් ඇති විය.");
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const takePhoto = async () => {
+    if (checking) return;
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("අවසර අවශ්‍යයි", "කැමරාව භාවිතා කිරීමට අවසර දෙන්න.");
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      quality: 0.8,
-    });
-    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+    const picked = await ImagePicker.launchCameraAsync(PICKER_OPTIONS);
+    if (!picked.canceled) checkPhoto(picked.assets[0].uri);
   };
 
   const pickFromGallery = async () => {
+    if (checking) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("අවසර අවශ්‍යයි", "ගැලරිය භාවිතා කිරීමට අවසර දෙන්න.");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.8,
-    });
-    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+    const picked = await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
+    if (!picked.canceled) checkPhoto(picked.assets[0].uri);
+  };
+
+  // NEW: clear the photo and result so the child can try again
+  const resetPhoto = () => {
+    setShowResult(false);
+    setResult(null);
+    setPhotoUri(null);
   };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ImageBackground
-        source={require("../../assets/images/sinhala-writing/homebackground.png")}
-        style={styles.container}
-        resizeMode="cover"
-        onLayout={onLayout}
-      >
+      <ImageBackground source={BACKGROUND} style={styles.container} resizeMode="cover" onLayout={onLayout}>
         {size.w > 0 && (
           <View style={styles.page}>
             {/* ================= HEADER ================= */}
             <View style={styles.header}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.backButton}
-                onPress={() => router.back()}
-              >
+              <TouchableOpacity activeOpacity={0.8} style={styles.backButton} onPress={() => router.back()}>
                 <Ionicons name="arrow-back" size={z.backSize * 0.55} color="#FFFFFF" />
               </TouchableOpacity>
 
@@ -194,10 +188,10 @@ export default function SinhalaAssessment1() {
 
               <View style={{ flex: 1 }}>
                 <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  සිංහල ඇගයුම 1
+                  {TITLE}
                 </Text>
                 <Text style={styles.headerSub} numberOfLines={1} adjustsFontSizeToFit>
-                  සිංහල ලිවීම - මූලික පරීක්ෂණය
+                  {SUBTITLE}
                 </Text>
               </View>
             </View>
@@ -249,13 +243,13 @@ export default function SinhalaAssessment1() {
                         ලියන වාක්‍යය
                       </Text>
                       <Text style={styles.cardSub} numberOfLines={1} adjustsFontSizeToFit>
-                        පහත දී ඇති වාක්‍යය ඔබේ පොතේ ලියන්න.
+                        ඔබ කැමති ඕනෑම වාක්‍යයක් ඔබේ පොතේ ලියන්න.
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.sentenceBox}>
-                    <Text style={styles.sentenceText} numberOfLines={1} adjustsFontSizeToFit>
+                    <Text style={styles.sentenceText} numberOfLines={2} adjustsFontSizeToFit>
                       {SENTENCE}
                     </Text>
                   </View>
@@ -286,19 +280,40 @@ export default function SinhalaAssessment1() {
                     {photoUri ? (
                       <>
                         <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
-                        <View style={styles.doneBadge}>
-                          <Ionicons name="checkmark" size={z.previewText * 1.3} color="#FFFFFF" />
-                        </View>
+                        {checking ? (
+                          // NEW: spinner while the backend checks the photo
+                          <View style={styles.checkingOverlay}>
+                            <ActivityIndicator size="large" color="#FFFFFF" />
+                            <Text style={styles.previewText}>පරීක්ෂා කරමින්...</Text>
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity activeOpacity={0.8} style={styles.removeBadge} onPress={resetPhoto}>
+                              <Ionicons name="close" size={z.previewText * 1.3} color="#FFFFFF" />
+                            </TouchableOpacity>
+                            {/* NEW: green ✓ or red ✗ from the model; tap to open the result again */}
+                            {result && (
+                              <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={[styles.doneBadge, !result.is_correct && styles.wrongBadge]}
+                                onPress={() => setShowResult(true)}
+                              >
+                                <Ionicons
+                                  name={result.is_correct ? "checkmark" : "close"}
+                                  size={z.previewText * 1.3}
+                                  color="#FFFFFF"
+                                />
+                              </TouchableOpacity>
+                            )}
+                          </>
+                        )}
                       </>
                     ) : (
                       <>
-                        {/* corner brackets */}
-                        <View style={styles.frame}>
-                          <View style={[styles.corner, styles.cTL]} />
-                          <View style={[styles.corner, styles.cTR]} />
-                          <View style={[styles.corner, styles.cBL]} />
-                          <View style={[styles.corner, styles.cBR]} />
-                        </View>
+                        <View style={[styles.corner, styles.cTL]} />
+                        <View style={[styles.corner, styles.cTR]} />
+                        <View style={[styles.corner, styles.cBL]} />
+                        <View style={[styles.corner, styles.cBR]} />
                         <Ionicons name="camera" size={z.previewIcon} color="#FFFFFF" />
                         <Text style={styles.previewText}>ඡායාරූපය ගන්න</Text>
                       </>
@@ -307,22 +322,14 @@ export default function SinhalaAssessment1() {
 
                   {/* Buttons */}
                   <View style={styles.btnRow}>
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      style={[styles.btn, styles.btnLight]}
-                      onPress={pickFromGallery}
-                    >
+                    <TouchableOpacity activeOpacity={0.85} style={[styles.btn, styles.btnLight]} onPress={pickFromGallery}>
                       <Ionicons name="images-outline" size={z.btnFont * 1.6} color={GREEN} />
                       <Text style={[styles.btnText, { color: GREEN }]} numberOfLines={1}>
                         ගැලරියෙන් තෝරන්න
                       </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      style={[styles.btn, styles.btnDark]}
-                      onPress={takePhoto}
-                    >
+                    <TouchableOpacity activeOpacity={0.85} style={[styles.btn, styles.btnDark]} onPress={takePhoto}>
                       <Ionicons name="camera" size={z.btnFont * 1.6} color="#FFFFFF" />
                       <Text style={[styles.btnText, { color: "#FFFFFF" }]} numberOfLines={1}>
                         කැමරාවෙන් ගන්න
@@ -335,12 +342,46 @@ export default function SinhalaAssessment1() {
           </View>
         )}
       </ImageBackground>
+
+      {/* ================= RESULT POPUP (NEW) ================= */}
+      <Modal
+        visible={showResult && result !== null}
+        transparent
+        animationType="fade"
+        supportedOrientations={["landscape", "portrait"]}
+        onRequestClose={() => setShowResult(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            {result && (
+              <SpacingResultCard
+                result={result}
+                onRetry={resetPhoto}
+                onNext={() => {
+                  setShowResult(false);
+                  router.push("/sinhala-writing/assesment-2");
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
 
 const makeStyles = (z: Sizes) => {
-  const corner = clamp(z.botH * 0.12, 14, 34);
+  const corner = clamp(z.botH * 0.14, 14, 34);
+  const cornerInsetV = clamp(z.botH * 0.04, 5, 14);
+  const cornerInsetH = clamp(z.botH * 0.08, 10, 28);
+
+  const cardShadow = {
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  };
 
   return StyleSheet.create({
     container: { flex: 1 },
@@ -355,7 +396,6 @@ const makeStyles = (z: Sizes) => {
     },
 
     /* ================= HEADER ================= */
-
     header: {
       height: z.headerH,
       width: z.headerW,
@@ -371,7 +411,6 @@ const makeStyles = (z: Sizes) => {
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 3 },
     },
-
     backButton: {
       width: z.backSize,
       height: z.backSize,
@@ -381,16 +420,13 @@ const makeStyles = (z: Sizes) => {
       alignItems: "center",
       justifyContent: "center",
     },
-
     headerEmoji: { fontSize: z.headerEmoji },
-
     headerTitle: {
       fontSize: z.headerTitle,
       lineHeight: z.headerTitle * 1.35,
       fontWeight: "900",
       color: "#FFFFFF",
     },
-
     headerSub: {
       fontSize: z.headerSub,
       lineHeight: z.headerSub * 1.35,
@@ -399,27 +435,16 @@ const makeStyles = (z: Sizes) => {
     },
 
     /* ================= BODY ================= */
-
-    body: {
-      height: z.bodyH,
-      flexDirection: "row",
-      gap: z.gap,
-    },
+    body: { height: z.bodyH, flexDirection: "row", gap: z.gap },
 
     /* ---------- LEFT PANEL ---------- */
-
     leftPanel: {
+      ...cardShadow,
       width: z.leftW,
       backgroundColor: "rgba(255,252,240,0.95)",
       borderRadius: clamp(z.bodyH * 0.06, 14, 30),
       padding: z.panelPad,
-      elevation: 4,
-      shadowColor: "#000",
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 3 },
     },
-
     tipHeader: {
       height: z.tipH,
       flexDirection: "row",
@@ -428,7 +453,6 @@ const makeStyles = (z: Sizes) => {
       borderRadius: z.tipH / 2,
       paddingHorizontal: z.tipH * 0.12,
     },
-
     tipIcon: {
       width: z.tipH * 0.78,
       height: z.tipH * 0.78,
@@ -437,7 +461,6 @@ const makeStyles = (z: Sizes) => {
       alignItems: "center",
       justifyContent: "center",
     },
-
     tipTitle: {
       marginLeft: z.tipH * 0.25,
       fontSize: z.tipTitle,
@@ -445,18 +468,8 @@ const makeStyles = (z: Sizes) => {
       fontWeight: "900",
       color: "#C2410C",
     },
-
-    steps: {
-      flex: 1,
-      justifyContent: "space-around",
-      paddingTop: z.panelPad * 0.5,
-    },
-
-    stepRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-
+    steps: { flex: 1, justifyContent: "space-evenly", paddingTop: z.panelPad * 0.5 },
+    stepRow: { flexDirection: "row", alignItems: "center" },
     stepNum: {
       width: z.stepNum,
       height: z.stepNum,
@@ -464,20 +477,13 @@ const makeStyles = (z: Sizes) => {
       alignItems: "center",
       justifyContent: "center",
     },
-
-    stepNumText: {
-      color: "#FFFFFF",
-      fontSize: z.stepNum * 0.45,
-      fontWeight: "900",
-    },
-
+    stepNumText: { color: "#FFFFFF", fontSize: z.stepNum * 0.45, fontWeight: "900" },
     stepIconBox: {
       width: z.stepIcon * 1.3,
       alignItems: "center",
       justifyContent: "center",
       marginHorizontal: z.stepNum * 0.25,
     },
-
     stepText: {
       flex: 1,
       fontSize: z.stepText,
@@ -487,63 +493,34 @@ const makeStyles = (z: Sizes) => {
     },
 
     /* ---------- RIGHT ---------- */
-
     right: { flex: 1, gap: z.gap },
-
-    cardHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-
-    cardCircle: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
+    cardHeader: { flexDirection: "row", alignItems: "center" },
+    cardCircle: { alignItems: "center", justifyContent: "center" },
     purpleCircle: {
       width: z.topCircle,
       height: z.topCircle,
       borderRadius: z.topCircle / 2,
       backgroundColor: "#6D3FE0",
     },
-
     greenCircle: {
       width: z.botCircle,
       height: z.botCircle,
       borderRadius: z.botCircle / 2,
       backgroundColor: "#2E8B57",
     },
-
     cardHeaderText: { flex: 1, marginLeft: z.cardPad },
-
-    cardTitle: {
-      fontSize: z.cardTitle,
-      lineHeight: z.cardTitle * 1.4,
-      fontWeight: "900",
-      color: NAVY,
-    },
-
-    cardSub: {
-      fontSize: z.cardSub,
-      lineHeight: z.cardSub * 1.4,
-      color: GREY,
-    },
+    cardTitle: { fontSize: z.cardTitle, lineHeight: z.cardTitle * 1.4, fontWeight: "900", color: NAVY },
+    cardSub: { fontSize: z.cardSub, lineHeight: z.cardSub * 1.4, color: GREY },
 
     /* ===== Sentence card ===== */
-
     sentenceCard: {
+      ...cardShadow,
       height: z.topH,
       backgroundColor: "rgba(246,242,255,0.95)",
       borderRadius: clamp(z.topH * 0.12, 14, 30),
       padding: z.cardPad,
       gap: z.cardPad * 0.6,
-      elevation: 4,
-      shadowColor: "#000",
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 3 },
     },
-
     sentenceBox: {
       flex: 1,
       width: GIRL_IMAGE ? "74%" : "100%",
@@ -556,15 +533,13 @@ const makeStyles = (z: Sizes) => {
       justifyContent: "center",
       paddingHorizontal: z.cardPad,
     },
-
     sentenceText: {
       fontSize: z.sentence,
       lineHeight: z.sentence * 1.4,
       fontWeight: "900",
       color: "#111111",
-      letterSpacing: 2,
+      textAlign: "center",
     },
-
     girlImage: {
       position: "absolute",
       right: 0,
@@ -574,20 +549,14 @@ const makeStyles = (z: Sizes) => {
     },
 
     /* ===== Photo card ===== */
-
     photoCard: {
+      ...cardShadow,
       height: z.botH,
       backgroundColor: "rgba(236,250,241,0.95)",
       borderRadius: clamp(z.botH * 0.1, 14, 30),
       padding: z.cardPad,
       gap: z.cardPad * 0.6,
-      elevation: 4,
-      shadowColor: "#000",
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 3 },
     },
-
     preview: {
       flex: 1,
       backgroundColor: "#7A7F87",
@@ -596,21 +565,18 @@ const makeStyles = (z: Sizes) => {
       justifyContent: "center",
       overflow: "hidden",
     },
-
     previewImage: { ...StyleSheet.absoluteFillObject },
-
     previewText: {
-      marginTop: 4,
+      marginTop: 2,
       fontSize: z.previewText,
       lineHeight: z.previewText * 1.4,
       fontWeight: "800",
       color: "#FFFFFF",
     },
-
     doneBadge: {
       position: "absolute",
       top: 8,
-      right: 8,
+      left: 8,
       width: z.previewText * 2.2,
       height: z.previewText * 2.2,
       borderRadius: z.previewText * 1.1,
@@ -618,31 +584,35 @@ const makeStyles = (z: Sizes) => {
       alignItems: "center",
       justifyContent: "center",
     },
-
-    frame: {
+    // NEW: red badge when the spacing is wrong
+    wrongBadge: { backgroundColor: "#DC2626" },
+    // NEW: dark layer + spinner while checking
+    checkingOverlay: {
       ...StyleSheet.absoluteFillObject,
-      margin: clamp(z.botH * 0.05, 6, 16),
-      marginHorizontal: "12%",
+      backgroundColor: "rgba(0,0,0,0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
     },
-
-    corner: {
+    removeBadge: {
       position: "absolute",
-      width: corner,
-      height: corner,
-      borderColor: "#FFFFFF",
+      top: 8,
+      right: 8,
+      width: z.previewText * 2.2,
+      height: z.previewText * 2.2,
+      borderRadius: z.previewText * 1.1,
+      backgroundColor: "rgba(0,0,0,0.55)",
+      alignItems: "center",
+      justifyContent: "center",
     },
 
-    cTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 10 },
-    cTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 10 },
-    cBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 10 },
-    cBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 10 },
+    corner: { position: "absolute", width: corner, height: corner, borderColor: "#FFFFFF" },
+    cTL: { top: cornerInsetV, left: cornerInsetH, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 10 },
+    cTR: { top: cornerInsetV, right: cornerInsetH, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 10 },
+    cBL: { bottom: cornerInsetV, left: cornerInsetH, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 10 },
+    cBR: { bottom: cornerInsetV, right: cornerInsetH, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 10 },
 
-    btnRow: {
-      height: z.btnH,
-      flexDirection: "row",
-      gap: z.gap,
-    },
-
+    btnRow: { height: z.btnH, flexDirection: "row", gap: z.gap },
     btn: {
       flex: 1,
       flexDirection: "row",
@@ -651,9 +621,7 @@ const makeStyles = (z: Sizes) => {
       gap: z.btnFont * 0.6,
       borderRadius: z.btnH * 0.3,
     },
-
     btnLight: { backgroundColor: "#D3F2DE" },
-
     btnDark: {
       backgroundColor: "#2E8B57",
       elevation: 3,
@@ -662,11 +630,16 @@ const makeStyles = (z: Sizes) => {
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
     },
+    btnText: { fontSize: z.btnFont, lineHeight: z.btnFont * 1.4, fontWeight: "800" },
 
-    btnText: {
-      fontSize: z.btnFont,
-      lineHeight: z.btnFont * 1.4,
-      fontWeight: "800",
+    /* ===== Result popup (NEW) ===== */
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: z.pad,
     },
+    modalBox: { width: "72%", maxWidth: 820, maxHeight: "92%" },
   });
 };

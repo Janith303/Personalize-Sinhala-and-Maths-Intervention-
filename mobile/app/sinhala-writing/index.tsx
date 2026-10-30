@@ -52,7 +52,7 @@ const ASSESSMENTS: Assessment[] = [
     color: "#7C4DDB",
     tint: "#F4EFFF",
     border: "#E4D9FF",
-    route:  "/sinhala-writing/assessment-1",
+    route:  "/sinhala-writing/assesment-1",
   },
   {
     n: 2,
@@ -62,7 +62,7 @@ const ASSESSMENTS: Assessment[] = [
     color: "#3B82F6",
     tint: "#EDF5FF",
     border: "#D3E5FF",
-    route: null, // placeholder
+    route: "/sinhala-writing/assesment-2", // placeholder
   },
 ];
 
@@ -84,7 +84,7 @@ const MODULES: Module[] = [
     color: "#2FB463",
     tint: "#EBFBF0",
     border: "#CDEFD8",
-    route: "/sinhala-writing/letter-size",
+    route: "/sinhala-writing/akuru-pramanaya",
     art: "tracing",
   },
   {
@@ -94,7 +94,7 @@ const MODULES: Module[] = [
     color: "#EC407A",
     tint: "#FFF0F5",
     border: "#FBD3E2",
-    route: "/sinhala-writing/sentence-building",
+    route: "/sinhala-writing/wakyagodanagamu",
     art: "puzzle",
   },
 ];
