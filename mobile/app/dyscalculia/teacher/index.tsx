@@ -272,9 +272,24 @@ export default function TeacherReport() {
           </View>
         )}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: s(8), marginTop: s(12) }}>
-          <Ionicons name="information-circle" size={s(24)} color={colors.white} />
-          <Txt size={16} weight="bold" color={colors.white} style={{ textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 4 }}>
+        {/* on a solid pill so it stays readable over the busy garden background */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'center',
+            gap: s(8),
+            marginTop: s(12),
+            backgroundColor: colors.white,
+            borderRadius: s(20),
+            borderWidth: s(2),
+            borderColor: colors.skyBorder,
+            paddingHorizontal: s(16),
+            paddingVertical: s(4),
+          }}
+        >
+          <Ionicons name="information-circle" size={s(24)} color={colors.blue} />
+          <Txt size={16} weight="bold" color={colors.navy}>
             {si.teacher.disclaimer}
           </Txt>
         </View>
