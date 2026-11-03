@@ -157,10 +157,12 @@ This component identifies specific Sinhala language micro-skills in which a chil
 ### Image Processing
 
 - OpenCV
+- OpenCV-based feature extraction
+- OpenCV + Support Vector Machine (SVM) — Sinhala word-spacing classification
+- OpenCV + Random Forest — Sinhala handwriting baseline-deviation classification
 - Image preprocessing
-- Feature extraction
-- Handwriting analysis
-
+- Handwriting measurement and analysis
+  
 ### Backend
 
 - Python FastAPI
