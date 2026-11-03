@@ -126,7 +126,7 @@ This component identifies specific Sinhala language micro-skills in which a chil
 **Main functionalities:**
 
 - Collect assessment responses.
-- Preprocess data and apply deep-learning or machine-learning models.
+- Preprocess data and apply deep-learning models.
 - Identify specific weak Sinhala micro-skills, including combinations of difficulties.
 - Provide Grade 3 syllabus-based intervention activities.
 - Use Explainable AI to explain assessment results.
